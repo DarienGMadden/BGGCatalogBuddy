@@ -60,7 +60,12 @@ button:focus-visible {
 #app {
   width: 100%;
   margin: 0 auto;
+  text-align: center;
+}
+.v-application {
+  width: 100%;
   padding: 2rem;
+  margin: 0 auto;
   text-align: center;
 }
 
@@ -68,15 +73,20 @@ button:focus-visible {
   text-transform: none !important;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+.horizontal-separator {
+  border-style: solid;
+  border-color: rgb(var(--v-theme-surface-darker-3));
+  border-width: 0px 0px 3px 0px;
+}
+
+.text-accent {
+  color: rgb(var(--v-theme-accent));
+}
+
+.text-accent-darker {
+  color: rgb(var(--v-theme-accent-darker));
+}
+
+.text-surface-darker-text {
+  color: rgb(var(--v-theme-surface-darker-text));
 }

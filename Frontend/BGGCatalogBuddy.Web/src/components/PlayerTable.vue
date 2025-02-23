@@ -1,83 +1,116 @@
 <template>
-  <div v-for="player in players" v-bind:key="player.id">
-    <div
-      class="d-flex align-center justify-center py-1 ma-1 playerPanel"
-      style="color: #bbbbbb"
-    >
-      <div class="ma-1">
-        <v-avatar transition="scale-transition" size="50">
-          <v-img cover :src="player.imageSource" />
-        </v-avatar>
+  <div v-if="players && players.length > 0">
+    <div v-for="player in players" v-bind:key="player.id">
+      <div
+        class="d-flex align-center justify-center ma-1 playerPanel"
+        v-on:click.stop="viewPlayer(player.id)"
+        v-if="mode == 1"
+      >
+        <div class="ma-1">
+          <v-avatar
+            transition="scale-transition"
+            size="60"
+            style="border-style: solid; border-width: 2px"
+            :style="{ borderColor: getBorderColor(player) }"
+          >
+            <v-img cover :src="player.imageSource" />
+          </v-avatar>
+        </div>
+        <div class="w-100 text-h5">{{ player.name }}</div>
       </div>
-      <div class="w-100 text-h5">
-        {{ player.name }}
+      <div
+        class="d-flex align-center justify-center ma-1 playerPanel"
+        :class="{ playerSelected: player.id == selectPlayer.id }"
+        v-on:click.stop="viewPlayer(player.id)"
+        v-if="mode == 2"
+      >
+        <div class="ma-1">
+          <v-avatar
+            transition="scale-transition"
+            size="60"
+            style="border-style: solid; border-width: 2px"
+            :style="{ borderColor: getBorderColor(player) }"
+          >
+            <v-img cover :src="player.imageSource" />
+          </v-avatar>
+        </div>
+        <div style="width: 80%" class="text-h5">{{ player.name }}</div>
+        <div style="width: 20%" class="text-h5 font-weight-bold">
+          {{ player.score.toFixed(2) }}
+        </div>
+      </div>
+      <div
+        class="d-flex align-center justify-center ma-1 playerPanel"
+        v-on:click.stop="viewPlayer(player.id)"
+        v-if="mode == 3"
+      >
+        <div class="ma-1">
+          <v-avatar
+            transition="scale-transition"
+            size="60"
+            style="border-style: solid; border-width: 2px"
+            :style="{ borderColor: getBorderColor(player) }"
+          >
+            <v-img cover :src="player.imageSource" />
+          </v-avatar>
+        </div>
+        <div style="width: 70%" class="text-h5">{{ player.name }}</div>
+        <div style="width: 10%" class="text-h5 font-weight-bold">
+          {{ player.totalPlays }}
+        </div>
+        <div style="width: 10%" class="text-h5 font-weight-bold">
+          {{ player.totalWins }}
+        </div>
+        <div style="width: 10%" class="text-h5 font-weight-bold">
+          {{ player.score.toFixed(2) }}
+        </div>
       </div>
     </div>
+  </div>
+  <div v-else>
+    <div class="text-h6 text-surface-darker-text">No data found...</div>
   </div>
 </template>
 
 <script>
-import { mapState } from "pinia";
-import useDataStore from "../stores/imported_data";
-
+//Modes:
+//1 = Home page (just player name)
+//2 = Player Leaderboard (player name + score)
+//3 = Top Plays for a game (player name + score + total plays + total wins)
 export default {
   name: "PlayerTable",
-  data: function () {
-    return {
-      players: null,
-    };
-  },
-  mounted: function () {
-    this.$emitter.on("dataImported", this.readImportedData);
-
-    this.readImportedData();
-  },
-  unmounted: function () {
-    this.$emitter.off("dataImported", this.readImportedData);
+  props: {
+    mode: Number,
+    players: Array,
+    selectPlayer: Object,
   },
   methods: {
-    readImportedData() {
-      if (!this.data_jsonFile || !this.data_playerImages) {
-        return;
-      }
-
-      const filteredPlayers = this.data_jsonFile.players.filter(
-        (x) => x.name !== ""
-      );
-      this.players = filteredPlayers.map((x) => ({
-        id: x.id,
-        name: x.name,
-        imageSource: this.getPlayerImage(x),
-      }));
+    viewPlayer(playerId) {
+      this.$emitter.emit("playerSelected");
+      this.$router.push(`/player/${playerId}`);
     },
-
-    getPlayerImage(player) {
-      const playerImage = this.data_playerImages.filter(
-        (x) => x.filename == player.image
-      );
-      if (playerImage.some) {
-        return playerImage[0].base64;
-      }
-      return "";
+    getBorderColor(player) {
+      return `#${player.color.slice(2, player.color.length)}`;
     },
-  },
-  computed: {
-    ...mapState(useDataStore, ["data_jsonFile", "data_playerImages"]),
   },
 };
 </script>
 <style scoped>
 .playerPanel {
-  background: #1f1f1f;
+  background: rgb(var(--v-theme-surface-darker));
   border-radius: 50px 20px 20px 50px;
+  color: rgb(var(--v-theme-surface-darker-text));
 }
 .playerPanel:hover {
-  background: #b28235;
+  background: rgb(var(--v-theme-accent-lighter));
   cursor: pointer;
-  font-weight: 500 !important;
-  color: black !important;
+  color: rgb(var(--v-theme-accent-lighter-text)) !important;
 }
 .playerPanel:hover > .text-h5 {
   font-weight: bold !important;
+}
+.playerSelected {
+  background: rgb(var(--v-theme-accent-darker));
+  color: rgb(var(--v-theme-accent-lighter-text)) !important;
 }
 </style>

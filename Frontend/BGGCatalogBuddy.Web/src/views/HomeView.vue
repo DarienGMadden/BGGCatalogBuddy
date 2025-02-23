@@ -11,59 +11,104 @@
           alt="BGG Catalog Logo"
         />
       </a>
-      <h1 style="color: #c18d38">BGG Catalog Buddy</h1>
+      <h1 class="text-accent">BGG Catalog Buddy</h1>
     </div>
     <ImportData />
-    <br />
-    <v-row class="ma-2">
+    <v-row class="ma-2" v-if="data_jsonFile != null">
       <v-col cols="6">
-        <h2
-          class="mb-3 pb-1"
-          style="
-            border-style: solid;
-            border-color: #191919;
-            border-width: 0px 0px 2px 0px;
-            color: #c18d38;
-          "
-        >
+        <div class="mb-3 pb-1 text-h5 text-accent font-weight-bold">
           Players
-        </h2>
-        <PlayerTable />
+        </div>
+        <hr class="horizontal-separator" />
+        <PlayerTable :players="players" :mode="1" />
       </v-col>
       <v-col cols="6">
-        <h2
-          class="mb-3 pb-1"
-          style="
-            border-style: solid;
-            border-color: #191919;
-            border-width: 0px 0px 2px 0px;
-            color: #c18d38;
-          "
-        >
+        <div class="mb-3 pb-1 text-h5 text-accent font-weight-bold">
           Played Games
-        </h2>
-        <PlayedGameTable />
+        </div>
+        <hr class="horizontal-separator" />
+        <PlayerGamesTable :games="games" :mode="1" />
       </v-col>
     </v-row>
+    <div
+      class="ma-2 pb-3 text-h5 font-weight-bold text-surface-darker-text"
+      v-else
+    >
+      No imported data found...
+    </div>
   </div>
 </template>
 
 <script>
+import { mapState } from "pinia";
+import useDataStore from "../stores/imported_data";
+
 import ImportData from "../components/ImportData.vue";
 import PlayerTable from "../components/PlayerTable.vue";
-import PlayedGameTable from "../components/PlayedGamesTable.vue";
+import PlayerGamesTable from "../components/PlayerGamesTable.vue";
+
+import { getPlayerImage } from "@/utils/playerUtils";
 
 export default {
   name: "Home",
   components: {
     ImportData,
     PlayerTable,
-    PlayedGameTable,
+    PlayerGamesTable,
   },
   data: function () {
-    return {};
+    return {
+      games: [],
+      players: [],
+    };
   },
-  methods: {},
+  mounted: function () {
+    this.$emitter.on("dataImported", this.populatePage);
+
+    this.populatePage();
+  },
+  unmounted: function () {
+    this.$emitter.off("dataImported", this.populatePage);
+  },
+  methods: {
+    populatePage() {
+      this.generateGamesData();
+      this.generatePlayersData();
+    },
+    generateGamesData() {
+      if (!this.data_jsonFile) {
+        return;
+      }
+      const allPlaysGameIDs = this.data_jsonFile.plays.map((x) => x.gameId);
+      const filteredGames = this.data_jsonFile.games.filter(
+        (x) => x.name !== "" && allPlaysGameIDs.includes(x.id)
+      );
+      this.games = filteredGames.map((x) => ({
+        id: x.id,
+        name: x.name,
+        imageSource: x.urlThumb,
+        mutedColor: x.mutedColor,
+        dominantColor: x.dominantColor,
+      }));
+    },
+    generatePlayersData() {
+      if (!this.data_jsonFile) {
+        return;
+      }
+      const filteredPlayers = this.data_jsonFile.players.filter(
+        (x) => x.name !== ""
+      );
+      this.players = filteredPlayers.map((x) => ({
+        id: x.id,
+        name: x.name,
+        color: x.color,
+        imageSource: getPlayerImage(this.data_playerImages, x),
+      }));
+    },
+  },
+  computed: {
+    ...mapState(useDataStore, ["data_jsonFile", "data_playerImages"]),
+  },
 };
 </script>
 
@@ -83,8 +128,11 @@ export default {
 .homepage {
   min-width: 980px;
   width: 40%;
-  background: #232323;
+  background: rgb(var(--v-theme-surface));
   margin: 0 auto;
   border-radius: 50px;
+  border-color: rgb(var(--v-theme-accent-lighter-2));
+  border-style: solid;
+  border-width: 10px 0px 0px 0px;
 }
 </style>
