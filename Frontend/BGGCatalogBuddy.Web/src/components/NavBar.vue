@@ -1,6 +1,9 @@
 <template>
   <v-app-bar flat color="transparent">
-    <v-container class="d-flex justify-center">
+    <v-container
+      style="max-width: none !important"
+      class="d-flex justify-center"
+    >
       <v-btn to="/" text class="text-h6"
         >Home <v-icon> mdi-home </v-icon></v-btn
       >
