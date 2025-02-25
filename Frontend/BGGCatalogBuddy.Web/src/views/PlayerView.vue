@@ -1,73 +1,79 @@
 <template>
-  <div class="playerpage" v-if="player != null">
-    <v-row class="ma-0">
-      <v-col cols="4" class="sidePanel">
-        <v-row>
-          <v-col cols="12" class="py-2">
-            <div class="mb-2">
-              <v-avatar
-                transition="scale-transition"
-                size="200"
-                style="border-style: solid; border-width: 6px"
-              >
-                <v-img cover :src="imageSource" />
-              </v-avatar>
-            </div>
-            <div class="text-h4 font-weight-bold text-accent">
-              {{ player.name }}
-            </div>
-          </v-col>
+  <v-row>
+    <v-spacer></v-spacer>
+    <v-col cols="11" sm="11" md="11" lg="10" xl="9">
+      <div v-if="player != null">
+        <v-row class="ma-0">
+          <v-col cols="12" lg="4" class="sidePanel">
+            <v-row>
+              <v-col cols="12" class="py-2">
+                <div class="mb-2">
+                  <v-avatar
+                    transition="scale-transition"
+                    size="200"
+                    style="border-style: solid; border-width: 6px"
+                  >
+                    <v-img cover :src="imageSource" />
+                  </v-avatar>
+                </div>
+                <div class="text-h4 font-weight-bold text-accent">
+                  {{ player.name }}
+                </div>
+              </v-col>
 
-          <v-col cols="12">
-            <PlayerTable
-              :players="leaderboardPlayers"
-              :mode="2"
-              :selectPlayer="player"
-            />
+              <v-col cols="12">
+                <PlayerTable
+                  :players="leaderboardPlayers"
+                  :mode="2"
+                  :selectPlayer="player"
+                />
+              </v-col>
+            </v-row>
+          </v-col>
+          <v-col cols="12" lg="8" class="mainPanel">
+            <v-row>
+              <v-col cols="6">
+                <div class="mb-3 pb-1 text-h5 text-accent font-weight-bold">
+                  Most Played Games
+                </div>
+                <hr class="horizontal-separator" />
+                <PlayerGamesTable
+                  :games="mostPlayedGames"
+                  :mode="2"
+                ></PlayerGamesTable>
+              </v-col>
+
+              <v-col cols="6">
+                <div class="mb-3 pb-1 text-h5 text-accent font-weight-bold">
+                  Most Won Games
+                </div>
+                <hr class="horizontal-separator" />
+                <PlayerGamesTable
+                  :games="mostWonGames"
+                  :mode="3"
+                ></PlayerGamesTable>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col cols="12">
+                <div class="mb-3 pb-1 text-h5 text-accent font-weight-bold">
+                  Best Scoring Games
+                </div>
+                <hr class="horizontal-separator" />
+                <PlayerGamesTable
+                  :games="bestScoringGames"
+                  :mode="4"
+                ></PlayerGamesTable>
+              </v-col>
+            </v-row>
           </v-col>
         </v-row>
-      </v-col>
-      <v-col cols="8" class="mainPanel">
-        <v-row>
-          <v-col cols="6">
-            <div class="mb-3 pb-1 text-h5 text-accent font-weight-bold">
-              Most Played Games
-            </div>
-            <hr class="horizontal-separator" />
-            <PlayerGamesTable
-              :games="mostPlayedGames"
-              :mode="2"
-            ></PlayerGamesTable>
-          </v-col>
 
-          <v-col cols="6">
-            <div class="mb-3 pb-1 text-h5 text-accent font-weight-bold">
-              Most Won Games
-            </div>
-            <hr class="horizontal-separator" />
-            <PlayerGamesTable
-              :games="mostWonGames"
-              :mode="3"
-            ></PlayerGamesTable>
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="12">
-            <div class="mb-3 pb-1 text-h5 text-accent font-weight-bold">
-              Best Scoring Games
-            </div>
-            <hr class="horizontal-separator" />
-            <PlayerGamesTable
-              :games="bestScoringGames"
-              :mode="4"
-            ></PlayerGamesTable>
-          </v-col>
-        </v-row>
-      </v-col>
-    </v-row>
-
-    <Filters></Filters>
-  </div>
+        <Filters></Filters>
+      </div>
+    </v-col>
+    <v-spacer></v-spacer>
+  </v-row>
 </template>
 
 <script>
@@ -273,11 +279,6 @@ export default {
 </script>
 
 <style>
-.playerpage {
-  min-width: 980px;
-  width: 70%;
-  margin: 0 auto;
-}
 .sidePanel {
   background: rgb(var(--v-theme-surface-darker-2));
   border-radius: 50px 0px 0px 0px;

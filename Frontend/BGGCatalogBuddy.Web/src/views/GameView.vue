@@ -1,56 +1,62 @@
 <template>
-  <div class="gamepage" v-if="game != null">
-    <v-row class="ma-0">
-      <v-col cols="4" class="sidePanel">
-        <v-row>
-          <v-col cols="12" class="py-2">
-            <div class="mb-2">
-              <v-avatar
-                transition="scale-transition"
-                size="200"
-                style="border-style: solid; border-width: 6px"
-              >
-                <v-img cover :src="game.urlImage" />
-              </v-avatar>
-            </div>
-            <div class="text-h4 font-weight-bold text-accent">
-              {{ game.name }}
-            </div>
-          </v-col>
+  <v-row>
+    <v-spacer></v-spacer>
+    <v-col cols="11" sm="11" md="11" lg="10" xl="9">
+      <div v-if="game != null">
+        <v-row class="ma-0">
+          <v-col cols="12" lg="4" class="sidePanel">
+            <v-row>
+              <v-col cols="12" class="py-2">
+                <div class="mb-2">
+                  <v-avatar
+                    transition="scale-transition"
+                    size="200"
+                    style="border-style: solid; border-width: 6px"
+                  >
+                    <v-img cover :src="game.urlImage" />
+                  </v-avatar>
+                </div>
+                <div class="text-h4 font-weight-bold text-accent">
+                  {{ game.name }}
+                </div>
+              </v-col>
 
-          <v-col cols="12">
-            <PlayerGamesTable
-              :games="leaderboardGames"
-              :mode="2"
-              :selectGame="game"
-            />
+              <v-col cols="12">
+                <PlayerGamesTable
+                  :games="leaderboardGames"
+                  :mode="2"
+                  :selectGame="game"
+                />
+              </v-col>
+            </v-row>
+          </v-col>
+          <v-col cols="12" lg="8" class="mainPanel">
+            <v-row>
+              <v-col cols="12">
+                <div class="mb-3 pb-1 text-h5 text-accent font-weight-bold">
+                  Top Players
+                </div>
+                <hr class="horizontal-separator" />
+                <PlayerTable :players="topPlayersData" :mode="3"></PlayerTable>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col cols="12">
+                <div class="mb-3 pb-1 text-h5 text-accent font-weight-bold">
+                  Recent Plays
+                </div>
+                <hr class="horizontal-separator" />
+                <PlaysTable :plays="recentPlays" :mode="1"></PlaysTable>
+              </v-col>
+            </v-row>
           </v-col>
         </v-row>
-      </v-col>
-      <v-col cols="8" class="mainPanel">
-        <v-row>
-          <v-col cols="12">
-            <div class="mb-3 pb-1 text-h5 text-accent font-weight-bold">
-              Top Players
-            </div>
-            <hr class="horizontal-separator" />
-            <PlayerTable :players="topPlayersData" :mode="3"></PlayerTable>
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="12">
-            <div class="mb-3 pb-1 text-h5 text-accent font-weight-bold">
-              Recent Plays
-            </div>
-            <hr class="horizontal-separator" />
-            <PlaysTable :plays="recentPlays" :mode="1"></PlaysTable>
-          </v-col>
-        </v-row>
-      </v-col>
-    </v-row>
 
-    <Filters></Filters>
-  </div>
+        <Filters></Filters>
+      </div>
+    </v-col>
+    <v-spacer></v-spacer>
+  </v-row>
 </template>
 <script>
 import { mapState } from "pinia";
@@ -234,11 +240,6 @@ export default {
 </script>
 
 <style>
-.gamepage {
-  min-width: 980px;
-  width: 70%;
-  margin: 0 auto;
-}
 .sidePanel {
   background: rgb(var(--v-theme-surface-darker-2));
   border-radius: 50px 0px 0px 0px;

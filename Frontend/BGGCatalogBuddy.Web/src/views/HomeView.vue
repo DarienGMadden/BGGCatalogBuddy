@@ -1,42 +1,48 @@
 <template>
-  <div class="homepage">
-    <div>
-      <a
-        href="https://play.google.com/store/apps/details?id=com.gadestudios.boardgame"
-        target="_blank"
-      >
-        <img
-          src="../assets/BGGCatalogLogo.png"
-          class="logo"
-          alt="BGG Catalog Logo"
-        />
-      </a>
-      <h1 class="text-accent">BGG Catalog Buddy</h1>
-    </div>
-    <ImportData />
-    <v-row class="ma-2" v-if="data_jsonFile != null">
-      <v-col cols="6">
-        <div class="mb-3 pb-1 text-h5 text-accent font-weight-bold">
-          Players
+  <v-row>
+    <v-spacer> </v-spacer>
+    <v-col cols="11" sm="11" md="10" lg="9" xl="7" xxl="5">
+      <div class="homepage">
+        <div>
+          <a
+            href="https://play.google.com/store/apps/details?id=com.gadestudios.boardgame"
+            target="_blank"
+          >
+            <img
+              src="../assets/BGGCatalogLogo.png"
+              class="logo"
+              alt="BGG Catalog Logo"
+            />
+          </a>
+          <h1 class="text-accent">BGG Catalog Buddy</h1>
         </div>
-        <hr class="horizontal-separator" />
-        <PlayerTable :players="players" :mode="1" />
-      </v-col>
-      <v-col cols="6">
-        <div class="mb-3 pb-1 text-h5 text-accent font-weight-bold">
-          Played Games
+        <ImportData />
+        <v-row class="ma-2" v-if="data_jsonFile != null">
+          <v-col cols="6">
+            <div class="mb-3 pb-1 text-h5 text-accent font-weight-bold">
+              Players
+            </div>
+            <hr class="horizontal-separator" />
+            <PlayerTable :players="players" :mode="1" />
+          </v-col>
+          <v-col cols="6">
+            <div class="mb-3 pb-1 text-h5 text-accent font-weight-bold">
+              Played Games
+            </div>
+            <hr class="horizontal-separator" />
+            <PlayerGamesTable :games="games" :mode="1" />
+          </v-col>
+        </v-row>
+        <div
+          class="ma-2 pb-3 text-h5 font-weight-bold text-surface-darker-text"
+          v-else
+        >
+          No imported data found...
         </div>
-        <hr class="horizontal-separator" />
-        <PlayerGamesTable :games="games" :mode="1" />
-      </v-col>
-    </v-row>
-    <div
-      class="ma-2 pb-3 text-h5 font-weight-bold text-surface-darker-text"
-      v-else
-    >
-      No imported data found...
-    </div>
-  </div>
+      </div>
+    </v-col>
+    <v-spacer> </v-spacer>
+  </v-row>
 </template>
 
 <script>
@@ -126,8 +132,6 @@ export default {
   filter: drop-shadow(0 0 2em #42b883aa);
 }
 .homepage {
-  min-width: 980px;
-  width: 40%;
   background: rgb(var(--v-theme-surface));
   margin: 0 auto;
   border-radius: 50px;
