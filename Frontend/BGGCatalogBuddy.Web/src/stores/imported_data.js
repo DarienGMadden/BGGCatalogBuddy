@@ -6,7 +6,6 @@ export default defineStore("imported_data", {
     data_lastImportDate: null,
     data_jsonFile: null,
     data_playerImages: [],
-    // data_test: "",
   }),
   persist: true,
   actions: {

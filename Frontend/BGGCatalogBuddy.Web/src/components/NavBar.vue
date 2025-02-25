@@ -21,6 +21,9 @@
 
 <script>
 import { useTheme } from "vuetify";
+import { storeToRefs } from "pinia";
+
+import useGlobalStore from "../stores/global";
 
 export default {
   name: "NavBar",
@@ -29,12 +32,23 @@ export default {
       theme: null,
     };
   },
+
   setup() {
     const theme = useTheme();
+    const globalStore = useGlobalStore();
+    const { global_selectedTheme } = storeToRefs(globalStore);
+    const { global_selectTheme } = globalStore;
+
+    if (global_selectedTheme != null) {
+      theme.global.name.value = global_selectedTheme.value;
+    }
+
     const toggleTheme = () => {
-      theme.global.name.value = !theme.global.current.value.dark
+      const newTheme = !theme.global.current.value.dark
         ? "darkTheme"
         : "lightTheme";
+      theme.global.name.value = newTheme;
+      global_selectTheme(newTheme);
     };
 
     return {
