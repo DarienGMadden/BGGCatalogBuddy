@@ -43,6 +43,7 @@
               Recent Plays
             </div>
             <hr class="horizontal-separator" />
+            <PlaysTable :plays="recentPlays" :mode="1"></PlaysTable>
           </v-col>
         </v-row>
       </v-col>
@@ -58,20 +59,24 @@ import useFilterStore from "../stores/filters";
 
 import PlayerTable from "../components/PlayerTable.vue";
 import PlayerGamesTable from "../components/PlayerGamesTable.vue";
+import PlaysTable from "../components/PlaysTable.vue";
 import Filters from "../components/Filters.vue";
 
 import { createGameDataObject } from "@/utils/gameScoreUtils";
 import { getPlayerImage } from "@/utils/playerUtils";
 import { getGameDetails } from "@/utils/gameUtils";
 
+import moment from "moment";
+
 export default {
   name: "Game",
-  components: { PlayerTable, PlayerGamesTable, Filters },
+  components: { PlayerTable, PlayerGamesTable, PlaysTable, Filters },
   data: function () {
     return {
       game: null,
       topPlayersData: null,
       leaderboardGames: null,
+      recentPlays: null,
     };
   },
   mounted: function () {
@@ -91,8 +96,8 @@ export default {
       this.loadGameDetails();
 
       this.generateLeaderboardGamesData();
-
       this.generateTopPlayersData();
+      this.generateRecentPlaysData();
     },
     loadGameDetails() {
       this.game = getGameDetails(this.data_jsonFile, this.$route.params.id);
@@ -143,6 +148,50 @@ export default {
         ["score"],
         ["desc"]
       );
+    },
+    generateRecentPlaysData() {
+      const recentPlays = this.data_jsonFile.plays.filter(
+        (x) => x.gameId == this.game.id
+      );
+
+      const recentPlaysPlayerPlays = this.data_jsonFile.playersPlays.filter(
+        (x) => recentPlays.map((y) => y.id).includes(x.playId)
+      );
+
+      const groupedRecentPlaysPlayerPlays = this.$lodash.groupBy(
+        recentPlaysPlayerPlays,
+        "playId"
+      );
+
+      const recentPlayData = [];
+      Object.entries(groupedRecentPlaysPlayerPlays).forEach(
+        ([playId, playerPlays]) => {
+          const playObj = recentPlays.filter((x) => x.id == playId)[0];
+          const totalPlayers = playerPlays.length;
+          const anyWinners = playerPlays.filter((y) => y.winner);
+          const winner =
+            anyWinners.length > 0
+              ? this.data_jsonFile.players.filter(
+                  (x) => x.id == anyWinners[0].playerId
+                )[0]
+              : null;
+          const location = this.data_jsonFile.locations.filter(
+            (x) => x.id == playObj.locationId
+          )[0];
+
+          recentPlayData.push({
+            id: playId,
+            playDate: playObj.playDate,
+            playerCount: totalPlayers,
+            location: location.name,
+            winningPlayer: winner,
+            winningImageSource: getPlayerImage(this.data_playerImages, winner),
+          });
+        }
+      );
+      this.recentPlays = this.$lodash
+        .orderBy(recentPlayData, ["playDate"], ["desc"])
+        .slice(0, 5);
     },
     generateGameData(game, rangeStart, rangeEnd, locationId) {
       const gamePlays = this.data_jsonFile.plays.filter(

@@ -1,5 +1,19 @@
 <template>
   <div v-if="players && players.length > 0">
+    <div>
+      <div class="d-flex align-center justify-center ma-1" v-if="mode == 3">
+        <div class="w-100"></div>
+        <div style="width: 15%" class="text-h6 text-accent font-weight-bold">
+          Plays
+        </div>
+        <div style="width: 15%" class="text-h6 text-accent font-weight-bold">
+          Wins
+        </div>
+        <div style="width: 15%" class="text-h6 text-accent font-weight-bold">
+          Score
+        </div>
+      </div>
+    </div>
     <div v-for="player in players" v-bind:key="player.id">
       <div
         class="d-flex align-center justify-center ma-1 playerPanel"
@@ -54,14 +68,14 @@
             <v-img cover :src="player.imageSource" />
           </v-avatar>
         </div>
-        <div style="width: 70%" class="text-h5">{{ player.name }}</div>
-        <div style="width: 10%" class="text-h5 font-weight-bold">
+        <div class="w-100 text-h5">{{ player.name }}</div>
+        <div style="width: 15%" class="text-h5 font-weight-bold">
           {{ player.totalPlays }}
         </div>
-        <div style="width: 10%" class="text-h5 font-weight-bold">
+        <div style="width: 15%" class="text-h5 font-weight-bold">
           {{ player.totalWins }}
         </div>
-        <div style="width: 10%" class="text-h5 font-weight-bold">
+        <div style="width: 15%" class="text-h5 font-weight-bold">
           {{ player.score.toFixed(2) }}
         </div>
       </div>
