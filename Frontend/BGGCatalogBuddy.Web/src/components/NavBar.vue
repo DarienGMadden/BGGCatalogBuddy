@@ -39,7 +39,7 @@ export default {
     const { global_selectedTheme } = storeToRefs(globalStore);
     const { global_selectTheme } = globalStore;
 
-    if (global_selectedTheme != null) {
+    if (global_selectedTheme != null && global_selectedTheme.value) {
       theme.global.name.value = global_selectedTheme.value;
     }
 
