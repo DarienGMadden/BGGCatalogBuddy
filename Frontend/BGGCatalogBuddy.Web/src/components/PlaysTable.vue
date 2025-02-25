@@ -7,9 +7,6 @@
         <div class="text-h6 text-accent font-weight-bold" style="width: 30%">
           Player #
         </div>
-        <div class="text-h6 text-accent font-weight-bold" style="width: 30%">
-          Location
-        </div>
       </div>
     </div>
     <div v-for="play in plays" v-bind:key="play.id">
@@ -33,9 +30,6 @@
           </div>
           <div class="text-h5 font-weight-bold" style="width: 30%">
             {{ play.playerCount }}
-          </div>
-          <div class="text-h5 font-weight-bold" style="width: 30%">
-            {{ play.location }}
           </div>
         </div>
       </div>

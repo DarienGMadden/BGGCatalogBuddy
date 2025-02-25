@@ -32,7 +32,7 @@
           </v-col>
           <v-col cols="12" lg="8" class="mainPanel">
             <v-row>
-              <v-col cols="6">
+              <v-col cols="12" sm="12" md="6">
                 <div class="mb-3 pb-1 text-h5 text-accent font-weight-bold">
                   Most Played Games
                 </div>
@@ -43,7 +43,7 @@
                 ></PlayerGamesTable>
               </v-col>
 
-              <v-col cols="6">
+              <v-col cols="12" sm="12" md="6">
                 <div class="mb-3 pb-1 text-h5 text-accent font-weight-bold">
                   Most Won Games
                 </div>

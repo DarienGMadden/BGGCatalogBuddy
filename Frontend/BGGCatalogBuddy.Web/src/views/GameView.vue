@@ -157,7 +157,11 @@ export default {
     },
     generateRecentPlaysData() {
       const recentPlays = this.data_jsonFile.plays.filter(
-        (x) => x.gameId == this.game.id
+        (x) =>
+          x.gameId == this.game.id &&
+          new Date(x.playDate) >= this.filter_dateRange.start &&
+          new Date(x.playDate) <= this.filter_dateRange.end &&
+          x.locationId == this.filter_selectedLocation
       );
 
       const recentPlaysPlayerPlays = this.data_jsonFile.playersPlays.filter(
@@ -181,15 +185,11 @@ export default {
                   (x) => x.id == anyWinners[0].playerId
                 )[0]
               : null;
-          const location = this.data_jsonFile.locations.filter(
-            (x) => x.id == playObj.locationId
-          )[0];
 
           recentPlayData.push({
             id: playId,
             playDate: playObj.playDate,
             playerCount: totalPlayers,
-            location: location.name,
             winningPlayer: winner,
             winningImageSource: getPlayerImage(this.data_playerImages, winner),
           });

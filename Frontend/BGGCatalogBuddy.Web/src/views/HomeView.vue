@@ -18,14 +18,14 @@
         </div>
         <ImportData />
         <v-row class="ma-2" v-if="data_jsonFile != null">
-          <v-col cols="6">
+          <v-col cols="12" sm="12" md="6">
             <div class="mb-3 pb-1 text-h5 text-accent font-weight-bold">
               Players
             </div>
             <hr class="horizontal-separator" />
             <PlayerTable :players="players" :mode="1" />
           </v-col>
-          <v-col cols="6">
+          <v-col cols="12" sm="12" md="6">
             <div class="mb-3 pb-1 text-h5 text-accent font-weight-bold">
               Played Games
             </div>
