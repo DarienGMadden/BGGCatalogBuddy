@@ -1,23 +1,21 @@
 import _ from "lodash";
 
+//TODO: I need to refactor these methods to properly use the player / game objects passed in.
+//The issue we have is the player / game objects have different data depending on from what perspective we have generated them from
+//(from the game, or player perspective).
+//We need to either create two separate methods to handle it OR, make it so the objects are always the same format. This would
+//result in us having two way connections between objects. For example. A playerPlay would have a play object, and then that play object would have a list of playerPlays.
+//This might be a bit much though.
 export function createGameDataObject(
   dataFile,
-  playerId,
-  gameId,
+  player,
+  game,
   gamePlays,
   playerPlayerPlays
 ) {
-  const game = dataFile.games.find((x) => x.id == gameId);
-  // If for some reason the game isn't found, skip it:
-  if (!game) return null;
-
-  const player = dataFile.players.find((x) => x.id == playerId);
-  // If for some reason the player isn't found, skip it:
-  if (!player) return null;
-
   let points = calculatePointsFromPlays(
     dataFile,
-    playerId,
+    player.id,
     gamePlays,
     game.averageweight,
     game.calculateWinner === 1
@@ -25,7 +23,7 @@ export function createGameDataObject(
   const playIDs = gamePlays.map((y) => y.id);
   const totalWins = playerPlayerPlays.filter(
     (x) =>
-      x.playerId == playerId && playIDs.includes(x.playId) && x.winner === 1
+      x.playerId == player.id && playIDs.includes(x.playId) && x.winner === 1
   );
   return {
     game: game,

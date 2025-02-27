@@ -70,9 +70,7 @@ import Filters from "../components/Filters.vue";
 
 import { createGameDataObject } from "@/utils/gameScoreUtils";
 import { getPlayerImage } from "@/utils/playerUtils";
-import { getGameDetails } from "@/utils/gameUtils";
-
-import moment from "moment";
+import { getFullGameDetails, getAllFullGameDetails } from "@/utils/gameUtils";
 
 export default {
   name: "Game",
@@ -106,10 +104,10 @@ export default {
       this.generateRecentPlaysData();
     },
     loadGameDetails() {
-      this.game = getGameDetails(this.data_jsonFile, this.$route.params.id);
+      this.game = getFullGameDetails(this.data_jsonFile, this.$route.params.id);
     },
     generateLeaderboardGamesData() {
-      const gameDetails = this.data_jsonFile.games.filter((x) => x.name !== "");
+      const gameDetails = getAllFullGameDetails(this.data_jsonFile);
       const gameData = gameDetails
         .map((game) =>
           this.generateGameData(
@@ -120,6 +118,7 @@ export default {
           )
         )
         .filter((x) => x.length > 0);
+
       this.leaderboardGames = this.$lodash.orderBy(
         gameData.map((x) => ({
           id: x[0].game.id,
@@ -156,17 +155,13 @@ export default {
       );
     },
     generateRecentPlaysData() {
-      const recentPlays = this.data_jsonFile.plays.filter(
+      const recentPlays = this.game.gamePlays.filter(
         (x) =>
-          x.gameId == this.game.id &&
           new Date(x.playDate) >= this.filter_dateRange.start &&
           new Date(x.playDate) <= this.filter_dateRange.end &&
           x.locationId == this.filter_selectedLocation
       );
-
-      const recentPlaysPlayerPlays = this.data_jsonFile.playersPlays.filter(
-        (x) => recentPlays.map((y) => y.id).includes(x.playId)
-      );
+      const recentPlaysPlayerPlays = recentPlays.flatMap((x) => x.playerPlays);
 
       const groupedRecentPlaysPlayerPlays = this.$lodash.groupBy(
         recentPlaysPlayerPlays,
@@ -200,26 +195,22 @@ export default {
         .slice(0, 5);
     },
     generateGameData(game, rangeStart, rangeEnd, locationId) {
-      const gamePlays = this.data_jsonFile.plays.filter(
+      const gamePlays = game.gamePlays.filter(
         (x) =>
-          x.gameId == game.id &&
           new Date(x.playDate) >= rangeStart &&
           new Date(x.playDate) <= rangeEnd &&
           x.locationId == locationId
       );
-      const gamePlayIDs = gamePlays.map((x) => x.id);
 
-      const playerPlays = this.data_jsonFile.playersPlays.filter((x) =>
-        gamePlayIDs.includes(x.playId)
-      );
+      const playerPlays = gamePlays.flatMap((x) => x.playerPlays);
       const groupedPlayerPlays = this.$lodash.groupBy(playerPlays, "playerId");
 
       const gameData = Object.entries(groupedPlayerPlays)
         .map(([playerId, playerPlays]) =>
           createGameDataObject(
             this.data_jsonFile,
-            playerId,
-            game.id,
+            playerPlays[0].player,
+            game,
             gamePlays,
             playerPlays
           )

@@ -86,7 +86,11 @@ import PlayerGamesTable from "../components/PlayerGamesTable.vue";
 import Filters from "../components/Filters.vue";
 
 import { createGameDataObject } from "@/utils/gameScoreUtils";
-import { getPlayerDetails, getPlayerImage } from "@/utils/playerUtils";
+import {
+  getPlayerImage,
+  getAllFullPlayerDetails,
+  getFullPlayerDetails,
+} from "@/utils/playerUtils";
 
 export default {
   name: "Player",
@@ -124,20 +128,20 @@ export default {
       this.generateBestScoringGamesData();
     },
     loadPlayerDetails() {
-      this.player = getPlayerDetails(this.data_jsonFile, this.$route.params.id);
+      this.player = getFullPlayerDetails(
+        this.data_jsonFile,
+        this.$route.params.id
+      );
       this.imageSource = getPlayerImage(this.data_playerImages, this.player);
     },
 
     generateLeaderboardPlayersData() {
-      const playerDetails = this.data_jsonFile.players.filter(
-        (x) => x.name !== ""
-      );
-
+      const playerDetails = getAllFullPlayerDetails(this.data_jsonFile);
       const playerGameData = playerDetails
         .map((player) => ({
-          playerData: getPlayerDetails(this.data_jsonFile, player.id),
+          playerData: player,
           gameData: this.generateGameDataForPlayer(
-            player.id,
+            player,
             this.filter_dateRange.start,
             this.filter_dateRange.end,
             this.filter_selectedLocation
@@ -162,7 +166,7 @@ export default {
     },
     generateMostPlayedGamesData() {
       const gameData = this.generateGameDataForPlayer(
-        this.$route.params.id,
+        this.player,
         this.filter_dateRange.start,
         this.filter_dateRange.end,
         this.filter_selectedLocation
@@ -185,7 +189,7 @@ export default {
     },
     generateMostWonGamesData() {
       const gameData = this.generateGameDataForPlayer(
-        this.$route.params.id,
+        this.player,
         this.filter_dateRange.start,
         this.filter_dateRange.end,
         this.filter_selectedLocation
@@ -208,7 +212,7 @@ export default {
     },
     generateBestScoringGamesData() {
       const gameScores = this.generateGameDataForPlayer(
-        this.$route.params.id,
+        this.player,
         this.filter_dateRange.start,
         this.filter_dateRange.end,
         this.filter_selectedLocation
@@ -229,20 +233,16 @@ export default {
       );
     },
 
-    generateGameDataForPlayer(playerId, rangeStart, rangeEnd, locationId) {
-      const playerPlays = this.data_jsonFile.playersPlays.filter(
-        (x) => x.playerId == playerId
-      );
-
-      const playerPlayIDs = playerPlays.map((x) => x.playId);
-
-      const filteredPlays = this.data_jsonFile.plays.filter(
-        (x) =>
-          playerPlayIDs.includes(x.id) &&
-          new Date(x.playDate) >= rangeStart &&
-          new Date(x.playDate) <= rangeEnd &&
-          x.locationId == locationId
-      );
+    generateGameDataForPlayer(player, rangeStart, rangeEnd, locationId) {
+      const playerPlays = player.playerPlays;
+      const filteredPlays = playerPlays
+        .flatMap((x) => x.play)
+        .filter(
+          (x) =>
+            new Date(x.playDate) >= rangeStart &&
+            new Date(x.playDate) <= rangeEnd &&
+            x.locationId == locationId
+        );
 
       const playsGroupedByGameId = this.$lodash.groupBy(
         filteredPlays,
@@ -257,8 +257,8 @@ export default {
           );
           return createGameDataObject(
             this.data_jsonFile,
-            playerId,
-            gameId,
+            player,
+            plays[0].game,
             plays,
             playerGamePlays
           );

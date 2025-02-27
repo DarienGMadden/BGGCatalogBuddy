@@ -53,7 +53,8 @@ import ImportData from "../components/ImportData.vue";
 import PlayerTable from "../components/PlayerTable.vue";
 import PlayerGamesTable from "../components/PlayerGamesTable.vue";
 
-import { getPlayerImage } from "@/utils/playerUtils";
+import { getPlayerImage, getAllFullPlayerDetails } from "@/utils/playerUtils";
+import { getAllFullGameDetails } from "@/utils/gameUtils";
 
 export default {
   name: "Home",
@@ -85,11 +86,9 @@ export default {
       if (!this.data_jsonFile) {
         return;
       }
-      const allPlaysGameIDs = this.data_jsonFile.plays.map((x) => x.gameId);
-      const filteredGames = this.data_jsonFile.games.filter(
-        (x) => x.name !== "" && allPlaysGameIDs.includes(x.id)
-      );
-      this.games = filteredGames.map((x) => ({
+      const allGames = getAllFullGameDetails(this.data_jsonFile);
+      const allPlayedGames = allGames.filter((x) => x.gamePlays.length > 0);
+      this.games = allPlayedGames.map((x) => ({
         id: x.id,
         name: x.name,
         imageSource: x.urlThumb,
@@ -101,9 +100,7 @@ export default {
       if (!this.data_jsonFile) {
         return;
       }
-      const filteredPlayers = this.data_jsonFile.players.filter(
-        (x) => x.name !== ""
-      );
+      const filteredPlayers = getAllFullPlayerDetails(this.data_jsonFile);
       this.players = filteredPlayers.map((x) => ({
         id: x.id,
         name: x.name,
