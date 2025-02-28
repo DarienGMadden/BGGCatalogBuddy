@@ -1,33 +1,31 @@
 import _ from "lodash";
 
-//TODO: I need to refactor these methods to properly use the player / game objects passed in.
-//The issue we have is the player / game objects have different data depending on from what perspective we have generated them from
-//(from the game, or player perspective).
-//We need to either create two separate methods to handle it OR, make it so the objects are always the same format. This would
-//result in us having two way connections between objects. For example. A playerPlay would have a play object, and then that play object would have a list of playerPlays.
-//This might be a bit much though.
-export function createGameDataObject(
+//Creates an object from a PLAYERS perspective, of a game and how many times the game has been played by this player.
+export function createGameDataObjectFromPlayerPerspective(
   dataFile,
   player,
   game,
-  gamePlays,
-  playerPlayerPlays
+  filteredGamePlays //Contains just a list of THIS games gamePlays filtered by location and date range
 ) {
-  let points = calculatePointsFromPlays(
-    dataFile,
-    player.id,
-    gamePlays,
-    game.averageweight,
-    game.calculateWinner === 1
+  //All the points + placements the particular player got for all the gamePlays passed in
+  let points = filteredGamePlays.map((play) =>
+    getPlayerScoreFromPlay(
+      dataFile,
+      player.id,
+      play,
+      game.averageweight,
+      game.calculateWinner === 1
+    )
   );
-  const playIDs = gamePlays.map((y) => y.id);
-  const totalWins = playerPlayerPlays.filter(
+  const playerPlayerPlays = player.playerPlays.filter(
     (x) =>
-      x.playerId == player.id && playIDs.includes(x.playId) && x.winner === 1
+      x.playerId == player.id &&
+      filteredGamePlays.map((y) => y.id).includes(x.playId)
   );
+  const totalWins = playerPlayerPlays.filter((x) => x.winner === 1);
   return {
     game: game,
-    gameTotalPlays: gamePlays.length,
+    gameTotalPlays: filteredGamePlays.length,
     player: player,
     playerTotalPlays: playerPlayerPlays.length,
     playerTotalWins: totalWins.length,
@@ -36,54 +34,81 @@ export function createGameDataObject(
   };
 }
 
-function calculatePointsFromPlays(
+//Creates an object from a GAMES perspective, of a player and how many times they have played this game.
+export function createPlayerDataObjectFromGamePerspective(
+  dataFile,
+  player,
+  game,
+  filteredGamePlays //Contains just a list of THIS games gamePlays filtered by location and date range
+) {
+  //All the points + placements the particular player got for all the gamePlays passed in
+  let points = filteredGamePlays.map((play) =>
+    getPlayerScoreFromPlay(
+      dataFile,
+      player.id,
+      play,
+      game.averageweight,
+      game.calculateWinner === 1
+    )
+  );
+  const playerPlayerPlays = filteredGamePlays
+    .flatMap((x) => x.playerPlays)
+    .filter((x) => x.playerId == player.id);
+
+  const totalWins = playerPlayerPlays.filter((x) => x.winner === 1);
+  return {
+    game: game,
+    gameTotalPlays: filteredGamePlays.length,
+    player: player,
+    playerTotalPlays: playerPlayerPlays.length,
+    playerTotalWins: totalWins.length,
+    playerPoints: _.meanBy(points, "playerScore"),
+    playerPointsV2: _.meanBy(points, "playerScoreV2"),
+  };
+}
+
+function getPlayerScoreFromPlay(
   dataFile,
   playerId,
-  plays,
+  play,
   gameWeight,
   lowestScoreWins
 ) {
-  let playerScores = [];
-  plays.forEach((play) => {
-    const allPlayerPlaysForPlay = dataFile.playersPlays.filter(
-      (playerPlay) => playerPlay.playId == play.id
-    );
-    const orderedPlayerPlays = _.orderBy(
-      allPlayerPlaysForPlay,
-      ["winner", "score"],
-      ["desc", lowestScoreWins ? "asc" : "desc"]
-    );
+  const allPlayerPlaysForPlay = dataFile.playersPlays.filter(
+    (playerPlay) => playerPlay.playId == play.id
+  );
+  const orderedPlayerPlays = _.orderBy(
+    allPlayerPlaysForPlay,
+    ["winner", "score"],
+    ["desc", lowestScoreWins ? "asc" : "desc"]
+  );
 
-    let position = 0;
-    let playerScore = 0;
-    let playerScoreV2 = 0;
+  let position = 0;
+  let playerScore = 0;
+  let playerScoreV2 = 0;
 
-    let lastPlayScore = 0;
-    for (const orderedPlayerPlay of orderedPlayerPlays) {
-      if (orderedPlayerPlay.winner) {
-        position = 1;
-      } else if (position === 0 || lastPlayScore !== orderedPlayerPlay.score) {
-        position++;
-      }
-
-      lastPlayScore = orderedPlayerPlay.score;
-      if (orderedPlayerPlay.playerId == playerId) {
-        playerScore = getScoreOffWeightAndPosition(gameWeight, position);
-        playerScoreV2 = getScoreOffWeightAndPositionV2(gameWeight, position);
-        break;
-      }
+  let lastPlayScore = 0;
+  for (const orderedPlayerPlay of orderedPlayerPlays) {
+    if (orderedPlayerPlay.winner) {
+      position = 1;
+    } else if (position === 0 || lastPlayScore !== orderedPlayerPlay.score) {
+      position++;
     }
 
-    playerScores.push({
-      playerScore,
-      playerScoreV2,
-      position,
-    });
-  });
+    lastPlayScore = orderedPlayerPlay.score;
+    if (orderedPlayerPlay.playerId == playerId) {
+      playerScore = getScoreOffWeightAndPosition(gameWeight, position);
+      playerScoreV2 = getScoreOffWeightAndPositionV2(gameWeight, position);
+      break;
+    }
+  }
 
-  return playerScores;
+  return {
+    playerScore,
+    playerScoreV2,
+    position,
+  };
 }
-
 function getScoreOffWeightAndPosition(gameWeight, position) {
   if (gameWeight <= 1.8) {
     //Light

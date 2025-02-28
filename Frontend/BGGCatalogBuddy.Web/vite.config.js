@@ -8,6 +8,10 @@ import vuetify, { transformAssetUrls } from "vite-plugin-vuetify";
 // https://vitejs.dev/config/
 export default defineConfig({
   base: "/BGGCatalogBuddy/",
+  test: {
+    //Needed to avoid having to use import statement in test suite files
+    globals: true,
+  },
   plugins: [
     vue({
       template: { transformAssetUrls },

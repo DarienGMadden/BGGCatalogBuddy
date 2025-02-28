@@ -1,4 +1,4 @@
-import { defineStore } from "pinia";
+import { defineStore, getActivePinia } from "pinia";
 import moment from "moment";
 
 export default defineStore("imported_data", {
@@ -17,7 +17,15 @@ export default defineStore("imported_data", {
         this.data_playerImages.push(x);
       });
       console.log("Data stored");
-      this.$emitter.emit("dataImported");
+      console.log(this);
+      console.log(this.$emitter);
+
+      const emitter = getActivePinia()?._a?.config?.globalProperties?.$emitter;
+      if (emitter) {
+        emitter.emit("dataImported");
+      } else {
+        console.warn("Emitter is not available in Pinia store");
+      }
     },
   },
 });

@@ -8,11 +8,7 @@
             <v-row>
               <v-col cols="12" class="py-2">
                 <div class="mb-2">
-                  <v-avatar
-                    transition="scale-transition"
-                    size="200"
-                    style="border-style: solid; border-width: 6px"
-                  >
+                  <v-avatar transition="scale-transition" size="200" style="border-style: solid; border-width: 6px">
                     <v-img cover :src="game.urlImage" />
                   </v-avatar>
                 </div>
@@ -22,11 +18,7 @@
               </v-col>
 
               <v-col cols="12">
-                <PlayerGamesTable
-                  :games="leaderboardGames"
-                  :mode="2"
-                  :selectGame="game"
-                />
+                <PlayerGamesTable :games="leaderboardGames" :mode="2" :selectGame="game" />
               </v-col>
             </v-row>
           </v-col>
@@ -68,7 +60,7 @@ import PlayerGamesTable from "../components/PlayerGamesTable.vue";
 import PlaysTable from "../components/PlaysTable.vue";
 import Filters from "../components/Filters.vue";
 
-import { createGameDataObject } from "@/utils/gameScoreUtils";
+import { createPlayerDataObjectFromGamePerspective } from "@/utils/gameScoreUtils";
 import { getPlayerImage } from "@/utils/playerUtils";
 import { getFullGameDetails, getAllFullGameDetails } from "@/utils/gameUtils";
 
@@ -177,8 +169,8 @@ export default {
           const winner =
             anyWinners.length > 0
               ? this.data_jsonFile.players.filter(
-                  (x) => x.id == anyWinners[0].playerId
-                )[0]
+                (x) => x.id == anyWinners[0].playerId
+              )[0]
               : null;
 
           recentPlayData.push({
@@ -195,24 +187,21 @@ export default {
         .slice(0, 5);
     },
     generateGameData(game, rangeStart, rangeEnd, locationId) {
-      const gamePlays = game.gamePlays.filter(
+      const filteredGamePlays = game.gamePlays.filter(
         (x) =>
           new Date(x.playDate) >= rangeStart &&
           new Date(x.playDate) <= rangeEnd &&
           x.locationId == locationId
       );
-
-      const playerPlays = gamePlays.flatMap((x) => x.playerPlays);
-      const groupedPlayerPlays = this.$lodash.groupBy(playerPlays, "playerId");
+      const groupedPlayerPlays = this.$lodash.groupBy(filteredGamePlays.flatMap((x) => x.playerPlays), "playerId");
 
       const gameData = Object.entries(groupedPlayerPlays)
         .map(([playerId, playerPlays]) =>
-          createGameDataObject(
+          createPlayerDataObjectFromGamePerspective(
             this.data_jsonFile,
             playerPlays[0].player,
             game,
-            gamePlays,
-            playerPlays
+            filteredGamePlays
           )
         )
         .filter((item) => item !== null); // remove any nulls
@@ -238,6 +227,7 @@ export default {
   border-style: solid;
   border-width: 10px 0px 0px 0px;
 }
+
 .mainPanel {
   background: rgb(var(--v-theme-surface));
   border-radius: 0px 50px 0px 0px;

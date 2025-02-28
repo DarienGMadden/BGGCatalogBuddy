@@ -8,11 +8,7 @@
             <v-row>
               <v-col cols="12" class="py-2">
                 <div class="mb-2">
-                  <v-avatar
-                    transition="scale-transition"
-                    size="200"
-                    style="border-style: solid; border-width: 6px"
-                  >
+                  <v-avatar transition="scale-transition" size="200" style="border-style: solid; border-width: 6px">
                     <v-img cover :src="imageSource" />
                   </v-avatar>
                 </div>
@@ -22,11 +18,7 @@
               </v-col>
 
               <v-col cols="12">
-                <PlayerTable
-                  :players="leaderboardPlayers"
-                  :mode="2"
-                  :selectPlayer="player"
-                />
+                <PlayerTable :players="leaderboardPlayers" :mode="2" :selectPlayer="player" />
               </v-col>
             </v-row>
           </v-col>
@@ -37,10 +29,7 @@
                   Most Played Games
                 </div>
                 <hr class="horizontal-separator" />
-                <PlayerGamesTable
-                  :games="mostPlayedGames"
-                  :mode="2"
-                ></PlayerGamesTable>
+                <PlayerGamesTable :games="mostPlayedGames" :mode="2"></PlayerGamesTable>
               </v-col>
 
               <v-col cols="12" sm="12" md="6">
@@ -48,10 +37,7 @@
                   Most Won Games
                 </div>
                 <hr class="horizontal-separator" />
-                <PlayerGamesTable
-                  :games="mostWonGames"
-                  :mode="3"
-                ></PlayerGamesTable>
+                <PlayerGamesTable :games="mostWonGames" :mode="3"></PlayerGamesTable>
               </v-col>
             </v-row>
             <v-row>
@@ -60,10 +46,7 @@
                   Best Scoring Games
                 </div>
                 <hr class="horizontal-separator" />
-                <PlayerGamesTable
-                  :games="bestScoringGames"
-                  :mode="4"
-                ></PlayerGamesTable>
+                <PlayerGamesTable :games="bestScoringGames" :mode="4"></PlayerGamesTable>
               </v-col>
             </v-row>
           </v-col>
@@ -84,13 +67,12 @@ import useFilterStore from "../stores/filters";
 import PlayerTable from "../components/PlayerTable.vue";
 import PlayerGamesTable from "../components/PlayerGamesTable.vue";
 import Filters from "../components/Filters.vue";
-
-import { createGameDataObject } from "@/utils/gameScoreUtils";
 import {
   getPlayerImage,
   getAllFullPlayerDetails,
   getFullPlayerDetails,
 } from "@/utils/playerUtils";
+import { createGameDataObjectFromPlayerPerspective } from "../utils/gameScoreUtils";
 
 export default {
   name: "Player",
@@ -250,17 +232,12 @@ export default {
       );
 
       const gameData = Object.entries(playsGroupedByGameId)
-        .map(([gameId, plays]) => {
-          //Grab only the playerPlays for the current player, for all the current games plays.
-          const playerGamePlays = playerPlays.filter((x) =>
-            plays.map((y) => y.id).includes(x.playId)
-          );
-          return createGameDataObject(
+        .map(([gameId, filteredGamePlays]) => {
+          return createGameDataObjectFromPlayerPerspective(
             this.data_jsonFile,
             player,
-            plays[0].game,
-            plays,
-            playerGamePlays
+            filteredGamePlays[0].game,
+            filteredGamePlays
           );
         })
         .filter((item) => item !== null); // remove any nulls
@@ -286,6 +263,7 @@ export default {
   border-style: solid;
   border-width: 10px 0px 0px 0px;
 }
+
 .mainPanel {
   background: rgb(var(--v-theme-surface));
   border-radius: 0px 50px 0px 0px;
