@@ -20,6 +20,9 @@
               <v-col cols="12">
                 <PlayerTable :players="leaderboardPlayers" :mode="2" :selectPlayer="player" />
               </v-col>
+              <v-col cols="12">
+                <Line :data="graphData" :options="graphOptions" :style="graphStyle"></Line>
+              </v-col>
             </v-row>
           </v-col>
           <v-col cols="12" lg="8" class="mainPanel">
@@ -63,7 +66,6 @@
 import { mapState } from "pinia";
 import useDataStore from "../stores/imported_data";
 import useFilterStore from "../stores/filters";
-
 import PlayerTable from "../components/PlayerTable.vue";
 import PlayerGamesTable from "../components/PlayerGamesTable.vue";
 import Filters from "../components/Filters.vue";
@@ -73,10 +75,25 @@ import {
   getFullPlayerDetails,
 } from "@/utils/playerUtils";
 import { createGameDataObjectFromPlayerPerspective } from "../utils/gameScoreUtils";
+import moment from "moment";
+import { Line } from 'vue-chartjs';
+import {
+  Chart as ChartJS,
+  Title,
+  Tooltip,
+  Legend,
+  LineElement,
+  LinearScale,
+  PointElement,
+  CategoryScale,
+  Filler
+} from 'chart.js';
+ChartJS.register(Title, Tooltip, Legend, LineElement, LinearScale, PointElement, CategoryScale, Filler);
+
 
 export default {
   name: "Player",
-  components: { PlayerTable, PlayerGamesTable, Filters },
+  components: { PlayerTable, PlayerGamesTable, Filters, Line },
   data: function () {
     return {
       player: null,
@@ -85,6 +102,24 @@ export default {
       mostWonGames: null,
       bestScoringGames: null,
       leaderboardPlayers: null,
+      graphData: null,
+      graphOptions: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              usePointStyle: true,
+              padding: 15
+            },
+            align: 'center'
+          }
+        }
+      },
+      graphStyle: {
+        height: '300px'
+      }
     };
   },
   mounted: function () {
@@ -145,6 +180,78 @@ export default {
         ["score"],
         ["desc"]
       );
+
+      let numberOfWeeks = 10;
+      let arrayOfWeeklyData = [];
+
+      playerGameData.forEach((player) => {
+        let startDate = moment().subtract(numberOfWeeks, "weeks");
+        let endDate = moment().subtract(numberOfWeeks - 1, "weeks");
+
+        for (let i = 0; i < numberOfWeeks; i++) {
+          let gameData = this.generateGameDataForPlayer(
+            player.playerData,
+            startDate,
+            endDate,
+            this.filter_selectedLocation
+          );
+          arrayOfWeeklyData.push({
+            playerData: player.playerData,
+            score: this.$lodash.meanBy(gameData, "playerPoints") || 0,
+            startDate: startDate.format("DD/MM"),
+            endDate: endDate.format("DD/MM"),
+            week: i + 1
+          });
+
+          endDate.add(1, "weeks");
+        }
+      });
+
+      const groupedByEndDateData = this.$lodash.groupBy(arrayOfWeeklyData, "endDate")
+      const labels = Object.entries(groupedByEndDateData).map(([x]) => x);
+
+      const groupedByPlayerData = this.$lodash
+        .groupBy(arrayOfWeeklyData, "playerData.id");
+
+      const datasets = Object.entries(groupedByPlayerData)
+        .map(([playerId, playerData]) => ({
+          label: playerData[0].playerData.name,
+          data: playerData.map((y) => y.score),
+          backgroundColor: this.brightenHex(`#${playerData[0].playerData.color.slice(2, playerData[0].playerData.color.length)}`, 10),
+          borderColor: `#${playerData[0].playerData.color.slice(2, playerData[0].playerData.color.length)}`,
+          pointBorderWidth: 3,
+          borderWidth: 4,
+          tension: 0.3,
+          pointRadius: 7,
+          pointHoverRadius: 9
+        }));
+
+      this.graphData = {
+        labels: labels,
+        datasets: datasets
+      };
+    },
+    brightenHex(hex, percent) {
+      // Remove # if present
+      hex = hex.replace(/^#/, '');
+
+      // Convert shorthand hex (e.g., #abc) to full form (e.g., #aabbcc)
+      if (hex.length === 3) {
+        hex = hex.split('').map(c => c + c).join('');
+      }
+
+      // Convert hex to RGB
+      let r = parseInt(hex.substring(0, 2), 16);
+      let g = parseInt(hex.substring(2, 4), 16);
+      let b = parseInt(hex.substring(4, 6), 16);
+
+      // Increase brightness based on percent (clamp between 0 and 255)
+      r = Math.min(255, Math.max(0, r + (r * percent / 100)));
+      g = Math.min(255, Math.max(0, g + (g * percent / 100)));
+      b = Math.min(255, Math.max(0, b + (b * percent / 100)));
+
+      // Convert back to hex and return
+      return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1).toUpperCase()}`;
     },
     generateMostPlayedGamesData() {
       const gameData = this.generateGameDataForPlayer(
