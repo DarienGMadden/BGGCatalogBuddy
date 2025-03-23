@@ -58,7 +58,7 @@ export default {
         this.jsonData = result.jsonData;
         this.imagesBase64 = result.imagesBase64;
       }
-      
+
       this.importMessage = "Getting additional game data from BGG...";
       await this.getAdditionalGameDataFromBGGAPI();
 
@@ -83,9 +83,12 @@ export default {
         const gameIDsToString = element.join(',');
 
         return this.$bgg.get(`thing?id=${gameIDsToString}&stats=1`).then((response) => {
-          const xmlString = response.data.contents; // Get XML string from response
-          const jsonObj = parser.parse(xmlString); // Convert XML to JSON
+          let xmlString = response.data; // Get XML string from response
+          if (response.data.contents) {
+            xmlString = response.data.contents
+          }
 
+          const jsonObj = parser.parse(xmlString); // Convert XML to JSON
           if (jsonObj && jsonObj.items && Array.isArray(jsonObj.items.item)) {
             jsonObj.items.item.forEach(item => {
               // Now you can access the item properties, such as:
