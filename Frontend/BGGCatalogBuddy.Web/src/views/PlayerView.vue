@@ -139,6 +139,7 @@ export default {
       this.loadPlayerDetails();
 
       this.generateLeaderboardPlayersData();
+      this.generatePlayerScoreChartData();
 
       this.generateMostPlayedGamesData();
       this.generateMostWonGamesData();
@@ -181,77 +182,6 @@ export default {
         ["desc"]
       );
 
-      let numberOfWeeks = 10;
-      let arrayOfWeeklyData = [];
-
-      playerGameData.forEach((player) => {
-        let startDate = moment().subtract(numberOfWeeks, "weeks");
-        let endDate = moment().subtract(numberOfWeeks - 1, "weeks");
-
-        for (let i = 0; i < numberOfWeeks; i++) {
-          let gameData = this.generateGameDataForPlayer(
-            player.playerData,
-            startDate,
-            endDate,
-            this.filter_selectedLocation
-          );
-          arrayOfWeeklyData.push({
-            playerData: player.playerData,
-            score: this.$lodash.meanBy(gameData, "playerPoints") || 0,
-            startDate: startDate.format("DD/MM"),
-            endDate: endDate.format("DD/MM"),
-            week: i + 1
-          });
-
-          endDate.add(1, "weeks");
-        }
-      });
-
-      const groupedByEndDateData = this.$lodash.groupBy(arrayOfWeeklyData, "endDate")
-      const labels = Object.entries(groupedByEndDateData).map(([x]) => x);
-
-      const groupedByPlayerData = this.$lodash
-        .groupBy(arrayOfWeeklyData, "playerData.id");
-
-      const datasets = Object.entries(groupedByPlayerData)
-        .map(([playerId, playerData]) => ({
-          label: playerData[0].playerData.name,
-          data: playerData.map((y) => y.score),
-          backgroundColor: this.brightenHex(`#${playerData[0].playerData.color.slice(2, playerData[0].playerData.color.length)}`, 10),
-          borderColor: `#${playerData[0].playerData.color.slice(2, playerData[0].playerData.color.length)}`,
-          pointBorderWidth: 3,
-          borderWidth: 4,
-          tension: 0.3,
-          pointRadius: 7,
-          pointHoverRadius: 9
-        }));
-
-      this.graphData = {
-        labels: labels,
-        datasets: datasets
-      };
-    },
-    brightenHex(hex, percent) {
-      // Remove # if present
-      hex = hex.replace(/^#/, '');
-
-      // Convert shorthand hex (e.g., #abc) to full form (e.g., #aabbcc)
-      if (hex.length === 3) {
-        hex = hex.split('').map(c => c + c).join('');
-      }
-
-      // Convert hex to RGB
-      let r = parseInt(hex.substring(0, 2), 16);
-      let g = parseInt(hex.substring(2, 4), 16);
-      let b = parseInt(hex.substring(4, 6), 16);
-
-      // Increase brightness based on percent (clamp between 0 and 255)
-      r = Math.min(255, Math.max(0, r + (r * percent / 100)));
-      g = Math.min(255, Math.max(0, g + (g * percent / 100)));
-      b = Math.min(255, Math.max(0, b + (b * percent / 100)));
-
-      // Convert back to hex and return
-      return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1).toUpperCase()}`;
     },
     generateMostPlayedGamesData() {
       const gameData = this.generateGameDataForPlayer(
@@ -319,7 +249,7 @@ export default {
         })),
         ["points"],
         ["desc"]
-      );
+      ).slice(0, 8);
     },
 
     generateGameDataForPlayer(player, rangeStart, rangeEnd, locationId) {
@@ -351,7 +281,94 @@ export default {
 
       return gameData;
     },
+    generatePlayerScoreChartData() {
+      const numberOfPoints = 10;
+      const filterStartDate = moment(new Date(this.filter_dateRange.start));
+      const filterEndDate = moment(new Date(this.filter_dateRange.end));
+      const iterationDays = filterEndDate.diff(filterStartDate, 'days') / numberOfPoints;
+
+      let arrayOfIterationData = [];
+
+      const playerDetails = getAllFullPlayerDetails(this.data_jsonFile);
+      playerDetails.forEach((player) => {
+        let startDate = filterStartDate;
+        let endDate = moment(filterStartDate).add(iterationDays, "days")
+
+        let playerIterationData = [];
+
+        for (let i = 0; i < numberOfPoints; i++) {
+          let gameData = this.generateGameDataForPlayer(
+            player,
+            startDate,
+            endDate,
+            this.filter_selectedLocation
+          );
+          playerIterationData.push({
+            playerData: player,
+            score: this.$lodash.meanBy(gameData, "playerPoints") || 0,
+            startDate: startDate.format("DD/MM"),
+            endDate: endDate.format("DD/MM"),
+            hasData: gameData.length > 0
+          });
+
+          endDate.add(iterationDays, "days");
+        }
+
+        if (playerIterationData.some(x => x.hasData)) {
+          arrayOfIterationData = arrayOfIterationData.concat(playerIterationData)
+        }
+      });
+
+      const groupedByEndDateData = this.$lodash.groupBy(arrayOfIterationData, "endDate")
+      const labels = Object.entries(groupedByEndDateData).map(([x]) => x);
+
+      const groupedByPlayerData = this.$lodash
+        .groupBy(arrayOfIterationData, "playerData.id");
+
+      const datasets = Object.entries(groupedByPlayerData)
+        .map(([playerId, playerData]) => ({
+          label: playerData[0].playerData.name,
+          data: playerData.map((y) => y.score),
+          backgroundColor: this.brightenHex(`#${playerData[0].playerData.color.slice(2, playerData[0].playerData.color.length)}`, 30),
+          borderColor: `#${playerData[0].playerData.color.slice(2, playerData[0].playerData.color.length)}`,
+          pointBorderWidth: 3,
+          borderWidth: playerId == this.$route.params.id ? 10 : 4,
+          tension: 0.3,
+          pointRadius: 7,
+          pointHoverRadius: 9,
+          borderDash: playerId == this.$route.params.id ? [0] : [4],
+          order: playerId == this.$route.params.id ? 0 : 1,
+        }));
+
+      this.graphData = {
+        labels: labels,
+        datasets: datasets
+      };
+    },
+    brightenHex(hex, percent) {
+      // Remove # if present
+      hex = hex.replace(/^#/, '');
+
+      // Convert shorthand hex (e.g., #abc) to full form (e.g., #aabbcc)
+      if (hex.length === 3) {
+        hex = hex.split('').map(c => c + c).join('');
+      }
+
+      // Convert hex to RGB
+      let r = parseInt(hex.substring(0, 2), 16);
+      let g = parseInt(hex.substring(2, 4), 16);
+      let b = parseInt(hex.substring(4, 6), 16);
+
+      // Increase brightness based on percent (clamp between 0 and 255)
+      r = Math.min(255, Math.max(0, r + (r * percent / 100)));
+      g = Math.min(255, Math.max(0, g + (g * percent / 100)));
+      b = Math.min(255, Math.max(0, b + (b * percent / 100)));
+
+      // Convert back to hex and return
+      return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1).toUpperCase()}`;
+    },
   },
+
   computed: {
     ...mapState(useDataStore, ["data_jsonFile", "data_playerImages"]),
     ...mapState(useFilterStore, [

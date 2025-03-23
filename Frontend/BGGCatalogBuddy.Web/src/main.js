@@ -8,16 +8,19 @@ import vuetify from "@/plugins/vuetify.js";
 import router from "./router";
 import mitt from "mitt";
 import lodash from "lodash";
+import bggAxiosInstance from '@/plugins/bggAxios.js'
 
 const app = createApp(App);
 const emitter = mitt();
 const pinia = createPinia();
 
+app.config.globalProperties.$bgg = bggAxiosInstance
 app.config.globalProperties.$emitter = emitter;
 app.config.globalProperties.$lodash = lodash;
 
 //Allow stores to access emitter
 pinia.use(({ store }) => {
+  store.$bgg = app.config.globalProperties.$bgg;
   store.$emitter = app.config.globalProperties.$emitter;
   store.$lodash = app.config.globalProperties.$lodash;
 });

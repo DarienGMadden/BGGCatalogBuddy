@@ -55,7 +55,8 @@ export default {
       this.$router.push(`/play/${playId}`);
     },
     getBorderColor(winner) {
-      return `#${winner.color.slice(2, winner.color.length)}`;
+      if(winner)
+        return `#${winner.color.slice(2, winner.color.length)}`;
     },
   },
 };

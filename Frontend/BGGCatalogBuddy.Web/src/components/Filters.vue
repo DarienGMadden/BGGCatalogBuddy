@@ -83,7 +83,7 @@ export default {
         this.filter_dateRange.start == null ||
         this.filter_dateRange.end == null
       ) {
-        this.dateRange.start = new Date(moment().subtract(1, "y"));
+        this.dateRange.start = new Date(moment().subtract(6, "months"));
         this.dateRange.end = new Date(moment());
       } else {
         this.dateRange.start = this.filter_dateRange.start;

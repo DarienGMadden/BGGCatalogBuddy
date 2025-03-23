@@ -13,9 +13,11 @@
   "dependencies": {
     "@mdi/font": "^7.4.47",
     "@popperjs/core": "^2.11.8",
+    "axios": "^1.8.4",
     "browser-image-compression": "^2.0.2",
     "chart.js": "^4.4.8",
     "eslint-plugin-vuetify": "^2.5.1",
+    "fast-xml-parser": "^5.0.9",
     "jszip": "^3.10.1",
     "lodash": "^4.17.21",
     "mitt": "^3.0.1",
