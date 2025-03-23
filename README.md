@@ -8,11 +8,11 @@ This application was inspired by the Playdates feature in the app. This feature 
 
 What would it look like, if you took weeks, months, or maybe even years worth of plays and or playdates, and combined it into a single score? Well, this tool was designed to show that. 
 
-This application is till a WIP and has been made with a desktop PC in mind. Mobile will "work", however it won't look great to be honest.
+This application is still a WIP and has been made with a desktop PC in mind. Mobile will "work", however it won't look great to be honest.
 
 ## Important Things to Note:
-This application has been tailored to how I use BGG Catalog, so, there is a good chance that the way you those BGG Catalog, might result in the imported data not being compatible. The main things that you need to do in order to have this application behave is:
-- Ensure a location is setup and setup for **EVERY** play/playdate. The application filters by location, and as it stands, a location is required for every play.
+This application has been tailored to how I use BGG Catalog, so, there is a good chance that the way you use BGG Catalog, might result in the imported data not being compatible. The main things that you need to do in order to have this application behave is:
+- Ensure a location is setup for **EVERY** play/playdate that you want to report on. The application filters by location, and as it stands, a location is required for every play you want to report on.
 - Ensure when you are completing a play, that you specify who the winner is, this application will **NOT** assume that the person with the higher score is the winner
 
 ## Features and Tools:
