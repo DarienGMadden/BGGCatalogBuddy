@@ -50,6 +50,7 @@ export default {
 
       // Determine file extension
       const fileExtension = file.name.split(".").pop().toLowerCase();
+      let replaceImages = false;
 
       if (fileExtension === "json") {
         this.jsonData = await processJsonFile(file);
@@ -57,13 +58,14 @@ export default {
         const result = await processZipFile(file);
         this.jsonData = result.jsonData;
         this.imagesBase64 = result.imagesBase64;
+        replaceImages = true;
       }
 
       this.importMessage = "Getting additional game data from BGG...";
       await this.getAdditionalGameDataFromBGGAPI();
 
       this.importMessage = "Finishing up...";
-      this.storeDataInPinia();
+      this.storeDataInPinia(replaceImages);
 
       this.loading = false
     },
@@ -122,9 +124,9 @@ export default {
       return result;
     },
 
-    storeDataInPinia() {
+    storeDataInPinia(replaceImages) {
       console.log("storing data in pinia");
-      this.data_storeData(this.jsonData, this.imagesBase64);
+      this.data_storeData(this.jsonData, this.imagesBase64, replaceImages);
     },
   },
   computed: {

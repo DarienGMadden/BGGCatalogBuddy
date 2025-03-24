@@ -2,7 +2,7 @@ export function getPlayerImage(dataPlayerImages, player) {
   const playerImage = dataPlayerImages.filter(
     (x) => x.filename == player.image
   );
-  if (playerImage.some) {
+  if (playerImage.length > 0) {
     return playerImage[0].base64;
   }
   return "";
@@ -10,7 +10,7 @@ export function getPlayerImage(dataPlayerImages, player) {
 
 export function getAllFullPlayerDetails(dataFile) {
   const players = dataFile.players.filter((x) => x.name !== "");
-  if (!players.some) return null;
+  if (players.length == 0) return null;
 
   return players.map((x) => getFullPlayerDetails(dataFile, x.id));
 }

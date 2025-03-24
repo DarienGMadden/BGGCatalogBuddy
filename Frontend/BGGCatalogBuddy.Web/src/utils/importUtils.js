@@ -2,17 +2,28 @@ import JSZip from "jszip";
 import imageCompression from "browser-image-compression";
 
 export async function processJsonFile(file) {
-  let jsonData = null;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      jsonData = JSON.parse(e.target.result);
-      console.log("JSON Data:", jsonData);
-    } catch (error) {
-      console.error("Invalid JSON file", error);
-    }
-  };
-  await reader.readAsText(file);
+  // Wrap the FileReader in a promise
+  const jsonData = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        console.log("JSON Data:", data);
+        resolve(data); // Resolve the promise with the parsed data
+      } catch (error) {
+        console.error("Invalid JSON file", error);
+        reject(error); // Reject the promise if there's an error
+      }
+    };
+
+    reader.onerror = (error) => {
+      reject(error); // Reject the promise on file read error
+    };
+
+    reader.readAsText(file); // Start reading the file
+  });
+
   return jsonData;
 }
 export async function processZipFile(file) {

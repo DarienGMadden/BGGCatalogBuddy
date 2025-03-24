@@ -9,13 +9,15 @@ export default defineStore("imported_data", {
   }),
   persist: true,
   actions: {
-    data_storeData(jsonFile, playerImages) {
+    data_storeData(jsonFile, playerImages, replaceImages) {
       this.data_lastImportDate = moment().format("DD/MM/YYYY HH:mm");
       this.data_jsonFile = jsonFile;
-      this.data_playerImages = [];
-      playerImages.map((x) => {
-        this.data_playerImages.push(x);
-      });
+      if (replaceImages) {
+        this.data_playerImages = [];
+        playerImages.map((x) => {
+          this.data_playerImages.push(x);
+        });
+      }
       console.log("Data stored");
       console.log(this);
       console.log(this.$emitter);
