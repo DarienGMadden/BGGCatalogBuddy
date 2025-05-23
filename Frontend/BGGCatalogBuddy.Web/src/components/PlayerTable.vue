@@ -15,36 +15,22 @@
       </div>
     </div>
     <div v-for="player in players" v-bind:key="player.id">
-      <div
-        class="d-flex align-center justify-center ma-1 playerPanel"
-        v-on:click.stop="viewPlayer(player.id)"
-        v-if="mode == 1"
-      >
+      <div class="d-flex align-center justify-center ma-1 playerPanel" v-on:click.stop="viewPlayer(player.id)"
+        v-if="mode == 1">
         <div class="ma-1">
-          <v-avatar
-            transition="scale-transition"
-            size="60"
-            style="border-style: solid; border-width: 2px"
-            :style="{ borderColor: getBorderColor(player) }"
-          >
+          <v-avatar transition="scale-transition" size="60" style="border-style: solid; border-width: 2px"
+            :style="{ borderColor: getBorderColor(player) }">
             <v-img cover :src="player.imageSource" />
           </v-avatar>
         </div>
         <div class="w-100 text-h5">{{ player.name }}</div>
       </div>
-      <div
-        class="d-flex align-center justify-center ma-1 playerPanel"
-        :class="{ playerSelected: player.id == selectPlayer.id }"
-        v-on:click.stop="viewPlayer(player.id)"
-        v-if="mode == 2"
-      >
+      <div class="d-flex align-center justify-center ma-1 playerPanel"
+        :class="{ playerSelected: player.id == selectPlayer.id }" v-on:click.stop="viewPlayer(player.id)"
+        v-if="mode == 2">
         <div class="ma-1">
-          <v-avatar
-            transition="scale-transition"
-            size="60"
-            style="border-style: solid; border-width: 2px"
-            :style="{ borderColor: getBorderColor(player) }"
-          >
+          <v-avatar transition="scale-transition" size="60" style="border-style: solid; border-width: 2px"
+            :style="{ borderColor: getBorderColor(player) }">
             <v-img cover :src="player.imageSource" />
           </v-avatar>
         </div>
@@ -53,18 +39,11 @@
           {{ player.score.toFixed(2) }}
         </div>
       </div>
-      <div
-        class="d-flex align-center justify-center ma-1 playerPanel"
-        v-on:click.stop="viewPlayer(player.id)"
-        v-if="mode == 3"
-      >
+      <div class="d-flex align-center justify-center ma-1 playerPanel" v-on:click.stop="viewPlayer(player.id)"
+        v-if="mode == 3">
         <div class="ma-1">
-          <v-avatar
-            transition="scale-transition"
-            size="60"
-            style="border-style: solid; border-width: 2px"
-            :style="{ borderColor: getBorderColor(player) }"
-          >
+          <v-avatar transition="scale-transition" size="60" style="border-style: solid; border-width: 2px"
+            :style="{ borderColor: getBorderColor(player) }">
             <v-img cover :src="player.imageSource" />
           </v-avatar>
         </div>
@@ -115,14 +94,17 @@ export default {
   border-radius: 50px 20px 20px 50px;
   color: rgb(var(--v-theme-surface-darker-text));
 }
+
 .playerPanel:hover {
   background: rgb(var(--v-theme-accent-lighter));
   cursor: pointer;
   color: rgb(var(--v-theme-accent-lighter-text)) !important;
 }
-.playerPanel:hover > .text-h5 {
+
+.playerPanel:hover>.text-h5 {
   font-weight: bold !important;
 }
+
 .playerSelected {
   background: rgb(var(--v-theme-accent-darker));
   color: rgb(var(--v-theme-accent-lighter-text)) !important;

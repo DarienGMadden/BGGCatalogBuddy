@@ -24,7 +24,15 @@
           </v-col>
           <v-col cols="12" lg="8" class="mainPanel">
             <v-row>
-              <v-col cols="12">
+              <v-col cols="12" v-if="selectedPlay != null">
+                <div class="mb-3 pb-1 text-h5 text-accent font-weight-bold">
+                  Played - {{ selectedPlayTimeInfo }}
+                </div>
+                <hr class="horizontal-separator" />
+                <PlayerPlayTable :playerPlays="selectedPlay.playerPlays"
+                  :orderBy="this.game.calculateWinner === 1 ? 'asc' : 'desc'" :mode="1"></PlayerPlayTable>
+              </v-col>
+              <v-col cols="12" v-else>
                 <div class="mb-3 pb-1 text-h5 text-accent font-weight-bold">
                   Top Players
                 </div>
@@ -38,7 +46,7 @@
                   Recent Plays
                 </div>
                 <hr class="horizontal-separator" />
-                <PlaysTable :plays="recentPlays" :mode="1"></PlaysTable>
+                <PlaysTable :plays="recentPlays" :mode="1" :selectPlay="selectedPlay" @viewPlay="viewPlay"></PlaysTable>
               </v-col>
             </v-row>
           </v-col>
@@ -56,6 +64,7 @@ import useDataStore from "../stores/imported_data";
 import useFilterStore from "../stores/filters";
 
 import PlayerTable from "../components/PlayerTable.vue";
+import PlayerPlayTable from "../components/PlayerPlayTable.vue";
 import PlayerGamesTable from "../components/PlayerGamesTable.vue";
 import PlaysTable from "../components/PlaysTable.vue";
 import Filters from "../components/Filters.vue";
@@ -64,15 +73,18 @@ import { createPlayerDataObjectFromGamePerspective } from "@/utils/gameScoreUtil
 import { getPlayerImage } from "@/utils/playerUtils";
 import { getFullGameDetails, getAllFullGameDetails } from "@/utils/gameUtils";
 
+import moment from "moment";
+
 export default {
   name: "Game",
-  components: { PlayerTable, PlayerGamesTable, PlaysTable, Filters },
+  components: { PlayerTable, PlayerPlayTable, PlayerGamesTable, PlaysTable, Filters },
   data: function () {
     return {
       game: null,
       topPlayersData: null,
       leaderboardGames: null,
       recentPlays: null,
+      selectedPlay: null,
     };
   },
   mounted: function () {
@@ -131,7 +143,6 @@ export default {
         this.filter_dateRange.end,
         this.filter_selectedLocation
       );
-
       this.topPlayersData = this.$lodash.orderBy(
         gameData.map((x) => ({
           id: x.player.id,
@@ -147,6 +158,7 @@ export default {
       );
     },
     generateRecentPlaysData() {
+      this.selectedPlay = null;
       const recentPlays = this.game.gamePlays.filter(
         (x) =>
           new Date(x.playDate) >= this.filter_dateRange.start &&
@@ -173,12 +185,21 @@ export default {
               )[0]
               : null;
 
+          const playerInfo = playerPlays.map((x) => ({
+            ...x,
+            player: {
+              ...x.player,
+              imageSource: getPlayerImage(this.data_playerImages, x.player)
+            }
+          }));
           recentPlayData.push({
             id: playId,
             playDate: playObj.playDate,
+            playEndDate: moment(playObj.playDate).add(playObj.length, "minutes").format("yyyy-MM-DD HH:mm:ss"),
             playerCount: totalPlayers,
             winningPlayer: winner,
             winningImageSource: getPlayerImage(this.data_playerImages, winner),
+            playerPlays: playerInfo
           });
         }
       );
@@ -207,6 +228,14 @@ export default {
         .filter((item) => item !== null); // remove any nulls
       return gameData;
     },
+    viewPlay(play) {
+      if (this.selectedPlay == play) {
+        this.selectedPlay = null
+      }
+      else {
+        this.selectedPlay = play
+      }
+    },
   },
 
   computed: {
@@ -215,6 +244,9 @@ export default {
       "filter_selectedLocation",
       "filter_dateRange",
     ]),
+    selectedPlayTimeInfo() {
+      return `${moment(this.selectedPlay.playDate).format("DD/MM HH:mm")} - ${moment(this.selectedPlay.playEndDate).format("HH:mm")}`
+    }
   },
 };
 </script>

@@ -10,18 +10,12 @@
       </div>
     </div>
     <div v-for="play in plays" v-bind:key="play.id">
-      <div v-on:click.stop="viewPlay(play.id)">
-        <div
-          class="d-flex align-center justify-center ma-1 playPanel"
-          v-if="mode == 1"
-        >
+      <div v-on:click.stop="viewPlay(play)">
+        <div class="d-flex align-center justify-center ma-1 playPanel"
+          :class="{ playSelected: selectPlay != null && play.id == selectPlay.id }" v-if="mode == 1">
           <div class="ma-1">
-            <v-avatar
-              transition="scale-transition"
-              size="60"
-              style="border-style: solid; border-width: 2px"
-              :style="{ borderColor: getBorderColor(play.winningPlayer) }"
-            >
+            <v-avatar transition="scale-transition" size="60" style="border-style: solid; border-width: 2px"
+              :style="{ borderColor: getBorderColor(play.winningPlayer) }">
               <v-img cover :src="play.winningImageSource" />
             </v-avatar>
           </div>
@@ -50,12 +44,17 @@ export default {
     plays: Array,
     selectPlay: Object,
   },
+  data: function () {
+    return {
+      selectedPlayId: null,
+    };
+  },
   methods: {
-    viewPlay(playId) {
-      this.$router.push(`/play/${playId}`);
+    viewPlay(play) {
+      this.$emit('viewPlay', play);
     },
     getBorderColor(winner) {
-      if(winner)
+      if (winner)
         return `#${winner.color.slice(2, winner.color.length)}`;
     },
   },
@@ -67,14 +66,17 @@ export default {
   border-radius: 50px 20px 20px 50px;
   color: rgb(var(--v-theme-surface-darker-text));
 }
+
 .playPanel:hover {
   background: rgb(var(--v-theme-accent-lighter));
   cursor: pointer;
   color: rgb(var(--v-theme-accent-lighter-text)) !important;
 }
-.playPanel:hover > .text-h6 {
+
+.playPanel:hover>.text-h6 {
   font-weight: bold !important;
 }
+
 .playSelected {
   background: rgb(var(--v-theme-accent-darker));
   color: rgb(var(--v-theme-accent-lighter-text)) !important;
