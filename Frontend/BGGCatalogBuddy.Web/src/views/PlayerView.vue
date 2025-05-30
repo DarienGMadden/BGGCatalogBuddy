@@ -222,7 +222,7 @@ export default {
           ),
           //Currently we are taking the average points of a game and not factoring in total plays of the game.
           //We need to: (playerPoints * gameTotalPlays) / count(gamesTotalPlays)
-          score: this.$lodash.meanBy(player.gameData, "playerPoints"),
+          score: this.$lodash.sumBy(player.gameData, item => (item.playerPoints * item.gameTotalPlays)) / this.$lodash.sumBy(player.gameData, "gameTotalPlays"),
         })),
         ["score"],
         ["desc"]
@@ -353,7 +353,8 @@ export default {
           );
           playerIterationData.push({
             playerData: player,
-            score: this.$lodash.meanBy(gameData, "playerPoints") || 0,
+            score: this.$lodash.sumBy(gameData, item => (item.playerPoints * item.gameTotalPlays)) / this.$lodash.sumBy(gameData, "gameTotalPlays") || 0,
+            //score: this.$lodash.meanBy(gameData, "playerPoints") || 0,
             startDate: startDate.format("DD/MM"),
             endDate: endDate.format("DD/MM"),
             hasData: gameData.length > 0
