@@ -220,6 +220,8 @@ export default {
             this.data_playerImages,
             player.playerData
           ),
+          //Currently we are taking the average points of a game and not factoring in total plays of the game.
+          //We need to: (playerPoints * gameTotalPlays) / count(gamesTotalPlays)
           score: this.$lodash.meanBy(player.gameData, "playerPoints"),
         })),
         ["score"],
