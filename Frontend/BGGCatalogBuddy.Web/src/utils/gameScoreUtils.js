@@ -41,8 +41,11 @@ export function createPlayerDataObjectFromGamePerspective(
   game,
   filteredGamePlays //Contains just a list of THIS games gamePlays filtered by location and date range
 ) {
+  const gamePlaysForPlayer = filteredGamePlays.filter((x) =>
+    x.playerPlays.some((y) => y.playerId == player.id)
+  );
   //All the points + placements the particular player got for all the gamePlays passed in
-  let points = filteredGamePlays.map((play) =>
+  let points = gamePlaysForPlayer.map((play) =>
     getPlayerScoreFromPlay(
       dataFile,
       player.id,
@@ -51,14 +54,14 @@ export function createPlayerDataObjectFromGamePerspective(
       game.calculateWinner === 1
     )
   );
-  const playerPlayerPlays = filteredGamePlays
+  const playerPlayerPlays = gamePlaysForPlayer
     .flatMap((x) => x.playerPlays)
     .filter((x) => x.playerId == player.id);
 
   const totalWins = playerPlayerPlays.filter((x) => x.winner === 1);
   return {
     game: game,
-    gameTotalPlays: filteredGamePlays.length,
+    gameTotalPlays: gamePlaysForPlayer.length,
     player: player,
     playerTotalPlays: playerPlayerPlays.length,
     playerTotalWins: totalWins.length,
