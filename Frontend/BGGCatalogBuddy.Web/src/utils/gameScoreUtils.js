@@ -41,6 +41,11 @@ export function createPlayerDataObjectFromGamePerspective(
   game,
   filteredGamePlays //Contains just a list of THIS games gamePlays filtered by location and date range
 ) {
+  console.log("Generate Player Data");
+  console.log(player);
+  console.log(game);
+  console.log(filteredGamePlays);
+
   const gamePlaysForPlayer = filteredGamePlays.filter((x) =>
     x.playerPlays.some((y) => y.playerId == player.id)
   );
@@ -91,14 +96,20 @@ function getPlayerScoreFromPlay(
   let playerScoreV2 = 0;
 
   let lastPlayScore = 0;
+  let lastPlayerWinner = 0;
   for (const orderedPlayerPlay of orderedPlayerPlays) {
     if (orderedPlayerPlay.winner) {
       position = 1;
-    } else if (position === 0 || lastPlayScore !== orderedPlayerPlay.score) {
+    } else if (
+      position === 0 ||
+      lastPlayScore !== orderedPlayerPlay.score ||
+      (lastPlayScore == orderedPlayerPlay.score && lastPlayerWinner)
+    ) {
       position++;
     }
 
     lastPlayScore = orderedPlayerPlay.score;
+    lastPlayerWinner = orderedPlayerPlay.winner;
     if (orderedPlayerPlay.playerId == playerId) {
       playerScore = getScoreOffWeightAndPosition(gameWeight, position);
       playerScoreV2 = getScoreOffWeightAndPositionV2(gameWeight, position);
