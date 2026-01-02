@@ -52,36 +52,6 @@
                 <PlayerGamesTable :games="bestScoringGames" :mode="4"></PlayerGamesTable>
               </v-col>
             </v-row>
-            <v-row>
-              <v-col cols="6">
-                <div class="mb-3 pb-1 text-h5 text-accent font-weight-bold">
-                  Favourite Category
-                </div>
-                <hr class="horizontal-separator" />
-                <v-row v-if="categoryRadarGraphData.labels.length > 0">
-                  <v-spacer></v-spacer>
-                  <v-col cols="12" xxl="9">
-                    <RadarChart :data="categoryRadarGraphData" :options="categoryRadarGraphOptions">
-                    </RadarChart>
-                  </v-col>
-                  <v-spacer></v-spacer>
-                </v-row>
-              </v-col>
-              <v-col cols="6">
-                <div class="mb-3 pb-1 text-h5 text-accent font-weight-bold">
-                  Favourite Mechanic
-                </div>
-                <hr class="horizontal-separator" />
-                <v-row v-if="mechanicRadarGraphData.labels.length > 0">
-                  <v-spacer></v-spacer>
-                  <v-col cols="12" xxl="9">
-                    <RadarChart :data="mechanicRadarGraphData" :options="mechanicRadarGraphOptions">
-                    </RadarChart>
-                  </v-col>
-                  <v-spacer></v-spacer>
-                </v-row>
-              </v-col>
-            </v-row>
           </v-col>
         </v-row>
 
@@ -141,26 +111,6 @@ export default {
       graphStyle: {
         height: '300px'
       },
-
-      // Favourite Category Chart 
-      categoryRadarGraphData: null,
-      categoryRadarGraphOptions: {
-        responsive: true,
-        scale: {
-          min: 0,
-          max: 8,
-        }
-      },
-
-      // Favourite Mechanic Chart 
-      mechanicRadarGraphData: null,
-      mechanicRadarGraphOptions: {
-        responsive: true,
-        scale: {
-          min: 0,
-          max: 8,
-        },
-      }
     };
   },
   mounted: function () {
@@ -185,9 +135,6 @@ export default {
       this.generateMostPlayedGamesData();
       this.generateMostWonGamesData();
       this.generateBestScoringGamesData();
-
-      this.generateFavouriteCategoryChartData();
-      this.generateFavouriteMechanicChartData();
     },
     loadPlayerDetails() {
       this.player = getFullPlayerDetails(
@@ -489,64 +436,6 @@ export default {
       });
 
       return graphData;
-    },
-    generateFavouriteCategoryChartData() {
-      const { start, end } = this.filter_dateRange;
-      const filterStartDate = moment(new Date(start));
-      const filterEndDate = moment(new Date(end));
-      const iterationDays = filterEndDate.diff(filterStartDate, 'days');
-
-      // Get the previous date range
-      const previousStartDate = moment(filterStartDate).subtract(iterationDays, "days");
-      const previousEndDate = moment(filterStartDate);
-
-      // Fetch game data for the current and previous date ranges
-      const gameScores = this.generateGameDataForPlayer(
-        this.player,
-        filterStartDate,
-        filterEndDate,
-        this.filter_selectedLocation
-      );
-      const previousGameScores = this.generateGameDataForPlayer(
-        this.player,
-        previousStartDate,
-        previousEndDate,
-        this.filter_selectedLocation
-      );
-
-      // Get the top categories and build the radar graph data
-      const topCategories = this.getCategoryStats(gameScores).slice(0, 10);
-      const previousTopCategories = this.getCategoryStats(previousGameScores);
-      this.categoryRadarGraphData = this.buildRadarGraphData(topCategories, previousTopCategories);
-    },
-    generateFavouriteMechanicChartData() {
-      const { start, end } = this.filter_dateRange;
-      const filterStartDate = moment(new Date(start));
-      const filterEndDate = moment(new Date(end));
-      const iterationDays = filterEndDate.diff(filterStartDate, 'days');
-
-      // Get the previous date range
-      const previousStartDate = moment(filterStartDate).subtract(iterationDays, "days");
-      const previousEndDate = moment(filterStartDate);
-
-      // Fetch game data for the current and previous date ranges
-      const gameScores = this.generateGameDataForPlayer(
-        this.player,
-        filterStartDate,
-        filterEndDate,
-        this.filter_selectedLocation
-      );
-      const previousGameScores = this.generateGameDataForPlayer(
-        this.player,
-        previousStartDate,
-        previousEndDate,
-        this.filter_selectedLocation
-      );
-
-      // Get the top mechanic and build the radar graph data
-      const topMechanics = this.getMechanicStats(gameScores).slice(0, 10);
-      const previousTopMechanics = this.getMechanicStats(previousGameScores);
-      this.mechanicRadarGraphData = this.buildRadarGraphData(topMechanics, previousTopMechanics);
     },
     truncateString(str, maxLength) {
       if (str.length > maxLength) {
