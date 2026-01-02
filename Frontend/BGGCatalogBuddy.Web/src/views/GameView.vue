@@ -137,6 +137,7 @@ export default {
       );
     },
     generateTopPlayersData() {
+      console.log("Top Players")
       const gameData = this.generateGameData(
         this.game,
         this.filter_dateRange.start,

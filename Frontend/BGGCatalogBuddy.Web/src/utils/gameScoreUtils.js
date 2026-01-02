@@ -41,8 +41,16 @@ export function createPlayerDataObjectFromGamePerspective(
   game,
   filteredGamePlays //Contains just a list of THIS games gamePlays filtered by location and date range
 ) {
+  console.log("Generate Player Data");
+  console.log(player);
+  console.log(game);
+  console.log(filteredGamePlays);
+
+  const gamePlaysForPlayer = filteredGamePlays.filter((x) =>
+    x.playerPlays.some((y) => y.playerId == player.id)
+  );
   //All the points + placements the particular player got for all the gamePlays passed in
-  let points = filteredGamePlays.map((play) =>
+  let points = gamePlaysForPlayer.map((play) =>
     getPlayerScoreFromPlay(
       dataFile,
       player.id,
@@ -51,14 +59,14 @@ export function createPlayerDataObjectFromGamePerspective(
       game.calculateWinner === 1
     )
   );
-  const playerPlayerPlays = filteredGamePlays
+  const playerPlayerPlays = gamePlaysForPlayer
     .flatMap((x) => x.playerPlays)
     .filter((x) => x.playerId == player.id);
 
   const totalWins = playerPlayerPlays.filter((x) => x.winner === 1);
   return {
     game: game,
-    gameTotalPlays: filteredGamePlays.length,
+    gameTotalPlays: gamePlaysForPlayer.length,
     player: player,
     playerTotalPlays: playerPlayerPlays.length,
     playerTotalWins: totalWins.length,
@@ -88,14 +96,20 @@ function getPlayerScoreFromPlay(
   let playerScoreV2 = 0;
 
   let lastPlayScore = 0;
+  let lastPlayerWinner = 0;
   for (const orderedPlayerPlay of orderedPlayerPlays) {
     if (orderedPlayerPlay.winner) {
       position = 1;
-    } else if (position === 0 || lastPlayScore !== orderedPlayerPlay.score) {
+    } else if (
+      position === 0 ||
+      lastPlayScore !== orderedPlayerPlay.score ||
+      (lastPlayScore == orderedPlayerPlay.score && lastPlayerWinner)
+    ) {
       position++;
     }
 
     lastPlayScore = orderedPlayerPlay.score;
+    lastPlayerWinner = orderedPlayerPlay.winner;
     if (orderedPlayerPlay.playerId == playerId) {
       playerScore = getScoreOffWeightAndPosition(gameWeight, position);
       playerScoreV2 = getScoreOffWeightAndPositionV2(gameWeight, position);

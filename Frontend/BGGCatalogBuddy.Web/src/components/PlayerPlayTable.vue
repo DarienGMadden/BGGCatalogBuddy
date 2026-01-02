@@ -65,12 +65,14 @@ export default {
         calculatePosition(playerPlay) {
             let position = 0;
             let lastPlayScore = 0;
+            let lastPlayerWinner = 0;
             for (const orderedPlay of this.orderedPlays) {
                 if (orderedPlay.winner) {
                     position = 1;
-                } else if (position === 0 || lastPlayScore !== orderedPlay.score) {
+                } else if (position === 0 || lastPlayScore !== orderedPlay.score || (lastPlayScore == orderedPlay.score && lastPlayerWinner)) {
                     position++;
                 }
+                lastPlayerWinner = orderedPlay.winner
                 lastPlayScore = orderedPlay.score;
                 if (orderedPlay.id == playerPlay.id) {
                     return position;
