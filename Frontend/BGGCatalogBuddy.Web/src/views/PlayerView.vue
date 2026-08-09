@@ -46,10 +46,17 @@
             <v-row>
               <v-col cols="12">
                 <div class="mb-3 pb-1 text-h5 text-accent font-weight-bold">
-                  Best Scoring Games
+                  Top Performing Games
                 </div>
                 <hr class="horizontal-separator" />
-                <PlayerGamesTable :games="bestScoringGames" :mode="4"></PlayerGamesTable>
+                <PlayerGamesTable :games="topPerformingGames" :mode="4"></PlayerGamesTable>
+              </v-col>
+              <v-col cols="12">
+                <div class="mb-3 pb-1 text-h5 text-accent font-weight-bold">
+                  Worst Performing Games
+                </div>
+                <hr class="horizontal-separator" />
+                <PlayerGamesTable :games="worstPerformingGames" :mode="4"></PlayerGamesTable>
               </v-col>
             </v-row>
           </v-col>
@@ -89,7 +96,8 @@ export default {
       imageSource: null,
       mostPlayedGames: null,
       mostWonGames: null,
-      bestScoringGames: null,
+      topPerformingGames: null,
+      worstPerformingGames: null,
       leaderboardPlayers: null,
 
       // Player Score Line Chart
@@ -134,7 +142,8 @@ export default {
 
       this.generateMostPlayedGamesData();
       this.generateMostWonGamesData();
-      this.generateBestScoringGamesData();
+      this.generateTopPerformingGamesData();
+      this.generateWorstPerformingGamesData();
     },
     loadPlayerDetails() {
       this.player = getFullPlayerDetails(
@@ -146,35 +155,66 @@ export default {
 
     generateLeaderboardPlayersData() {
       const playerDetails = getAllFullPlayerDetails(this.data_jsonFile);
-      const playerGameData = playerDetails
-        .map((player) => ({
-          playerData: player,
-          gameData: this.generateGameDataForPlayer(
-            player,
-            this.filter_dateRange.start,
-            this.filter_dateRange.end,
-            this.filter_selectedLocation
-          ),
-        }))
-        .filter((playerGameData) => playerGameData.gameData.length > 0);
 
       this.leaderboardPlayers = this.$lodash.orderBy(
-        playerGameData.map((player) => ({
-          id: player.playerData.id,
-          name: player.playerData.name,
-          color: player.playerData.color,
-          imageSource: getPlayerImage(
-            this.data_playerImages,
-            player.playerData
-          ),
-          //Currently we are taking the average points of a game and not factoring in total plays of the game.
-          //We need to: (playerPoints * gameTotalPlays) / count(gamesTotalPlays)
-          score: this.$lodash.sumBy(player.gameData, item => (item.playerPoints * item.gameTotalPlays)) / this.$lodash.sumBy(player.gameData, "gameTotalPlays"),
-        })),
-        ["score"],
+        (playerDetails || [])
+          .map((player) => {
+            const filteredPlayerPlays = this.getFilteredPlayerPlaysForLeaderboard(player);
+            if (!filteredPlayerPlays.length) {
+              return null;
+            }
+
+            return {
+              id: player.id,
+              name: player.name,
+              color: player.color,
+              imageSource: getPlayerImage(this.data_playerImages, player),
+              playerTotalElo: this.getLatestPlayerEndingElo(filteredPlayerPlays),
+            };
+          })
+          .filter(Boolean),
+        ["playerTotalElo"],
         ["desc"]
       );
+    },
+    getFilteredPlayerPlaysForLeaderboard(player) {
+      if (!player || !Array.isArray(player.playerPlays) || player.playerPlays.length === 0) {
+        return [];
+      }
 
+      return player.playerPlays.filter((playerPlay) => {
+        const play = playerPlay?.play;
+        if (!play) return false;
+
+        const playDate = new Date(play.playDate);
+        const inDateRange =
+          playDate >= this.filter_dateRange.start &&
+          playDate <= this.filter_dateRange.end;
+        const inLocation =
+          this.filter_selectedLocation === "all" ||
+          play.locationId == this.filter_selectedLocation;
+
+        return inDateRange && inLocation;
+      });
+    },
+    getLatestPlayerEndingElo(playerPlays) {
+      if (!Array.isArray(playerPlays) || playerPlays.length === 0) {
+        return 1500;
+      }
+
+      const scoredPlays = playerPlays
+        .filter((playerPlay) => typeof playerPlay.endingElo === "number")
+        .sort((a, b) => {
+          const aDate = a.play?.playDate ? new Date(a.play.playDate).getTime() : 0;
+          const bDate = b.play?.playDate ? new Date(b.play.playDate).getTime() : 0;
+          return bDate - aDate;
+        });
+
+      if (scoredPlays.length > 0) {
+        return scoredPlays[0].endingElo;
+      }
+
+      return 1500;
     },
     generateMostPlayedGamesData() {
       const gameData = this.generateGameDataForPlayer(
@@ -222,7 +262,7 @@ export default {
         )
         .slice(0, 5);
     },
-    generateBestScoringGamesData() {
+    generateTopPerformingGamesData() {
       const gameScores = this.generateGameDataForPlayer(
         this.player,
         this.filter_dateRange.start,
@@ -230,7 +270,7 @@ export default {
         this.filter_selectedLocation
       );
 
-      this.bestScoringGames = this.$lodash.orderBy(
+      this.topPerformingGames = this.$lodash.orderBy(
         gameScores.map((x) => ({
           id: x.game.id,
           name: x.game.name,
@@ -239,9 +279,33 @@ export default {
           dominantColor: x.game.dominantColor,
           points: x.playerPoints,
           pointsV2: x.playerPointsV2,
+          eloChange: x.playerTotalEloChange
         })),
-        ["points"],
-        ["desc"]
+        ["eloChange", "points"],
+        ["desc", "desc"]
+      ).slice(0, 5);
+    },
+    generateWorstPerformingGamesData() {
+      const gameScores = this.generateGameDataForPlayer(
+        this.player,
+        this.filter_dateRange.start,
+        this.filter_dateRange.end,
+        this.filter_selectedLocation
+      );
+
+      this.worstPerformingGames = this.$lodash.orderBy(
+        gameScores.map((x) => ({
+          id: x.game.id,
+          name: x.game.name,
+          imageSource: x.game.urlThumb,
+          mutedColor: x.game.mutedColor,
+          dominantColor: x.game.dominantColor,
+          points: x.playerPoints,
+          pointsV2: x.playerPointsV2,
+          eloChange: x.playerTotalEloChange
+        })),
+        ["eloChange", "points"],
+        ["asc", "asc"]
       ).slice(0, 5);
     },
     generateGameDataForPlayer(player, rangeStart, rangeEnd, locationId) {
@@ -280,42 +344,56 @@ export default {
       const { start, end } = this.filter_dateRange;
       const filterStartDate = moment(start);
       const filterEndDate = moment(end);
-      const iterationDays = filterEndDate.diff(filterStartDate, 'days') / numberOfPoints;
+      const totalDays = Math.max(filterEndDate.diff(filterStartDate, 'days'), 1);
+      const iterationDays = totalDays / numberOfPoints;
 
       let arrayOfIterationData = [];
 
       const playerDetails = getAllFullPlayerDetails(this.data_jsonFile);
       playerDetails.forEach((player) => {
-        let startDate = filterStartDate;
-        let endDate = moment(filterStartDate).add(iterationDays, "days")
+        const filteredPlayerPlays = this.getFilteredPlayerPlaysForLeaderboard(player);
+        if (!filteredPlayerPlays.length) {
+          return;
+        }
+
+        const eloHistory = filteredPlayerPlays
+          .filter((playerPlay) => typeof playerPlay.endingElo === "number")
+          .sort((a, b) => new Date(a.play.playDate) - new Date(b.play.playDate));
+
+        let startDate = filterStartDate.clone();
+        let endDate = moment(filterStartDate).add(iterationDays, "days");
 
         let playerIterationData = [];
 
         for (let i = 0; i < numberOfPoints; i++) {
-          let gameData = this.generateGameDataForPlayer(
-            player,
-            startDate,
-            endDate,
-            this.filter_selectedLocation
-          );
+          const latestEloAtThisPoint = eloHistory
+            .filter((playerPlay) => {
+              const playDate = new Date(playerPlay.play.playDate);
+              const inLocation =
+                this.filter_selectedLocation === "all" ||
+                playerPlay.play.locationId == this.filter_selectedLocation;
+              return inLocation && playDate <= endDate.toDate();
+            })
+            .slice(-1)[0]?.endingElo ?? 1500;
+
           playerIterationData.push({
             playerData: player,
-            score: this.$lodash.sumBy(gameData, item => (item.playerPoints * item.gameTotalPlays)) / this.$lodash.sumBy(gameData, "gameTotalPlays") || 0,
-            //score: this.$lodash.meanBy(gameData, "playerPoints") || 0,
+            score: latestEloAtThisPoint,
             startDate: startDate.format("DD/MM"),
             endDate: endDate.format("DD/MM"),
-            hasData: gameData.length > 0
+            hasData: latestEloAtThisPoint !== null
           });
 
-          endDate.add(iterationDays, "days");
+          startDate = endDate.clone();
+          endDate = moment(endDate).add(iterationDays, "days");
         }
 
-        if (playerIterationData.some(x => x.hasData)) {
-          arrayOfIterationData = arrayOfIterationData.concat(playerIterationData)
+        if (playerIterationData.some((x) => x.hasData)) {
+          arrayOfIterationData = arrayOfIterationData.concat(playerIterationData);
         }
       });
 
-      const groupedByEndDateData = this.$lodash.groupBy(arrayOfIterationData, "endDate")
+      const groupedByEndDateData = this.$lodash.groupBy(arrayOfIterationData, "endDate");
       const labels = Object.entries(groupedByEndDateData).map(([x]) => x);
 
       const groupedByPlayerData = this.$lodash

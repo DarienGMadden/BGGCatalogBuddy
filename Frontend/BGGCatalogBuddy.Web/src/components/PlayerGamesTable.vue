@@ -2,17 +2,10 @@
   <div v-if="games && games.length > 0">
     <div v-for="game in games" v-bind:key="game.id">
       <div v-on:click.stop="viewGame(game.id)">
-        <div
-          class="d-flex align-center justify-center ma-1 playerGamePanel"
-          v-if="mode == 1"
-        >
+        <div class="d-flex align-center justify-center ma-1 playerGamePanel" v-if="mode == 1">
           <div class="ma-1">
-            <v-avatar
-              transition="scale-transition"
-              size="60"
-              style="border-style: solid; border-width: 2px"
-              :style="{ borderColor: getBorderColor(game) }"
-            >
+            <v-avatar transition="scale-transition" size="60" style="border-style: solid; border-width: 2px"
+              :style="{ borderColor: getBorderColor(game) }">
               <v-img cover :src="game.imageSource" />
             </v-avatar>
           </div>
@@ -20,20 +13,12 @@
             {{ game.name }}
           </div>
         </div>
-        <div
-          class="d-flex align-center justify-center ma-1 playerGamePanel"
-          :class="{
-            playerGameSelected: selectGame && game.id == selectGame.id,
-          }"
-          v-else-if="mode == 2"
-        >
+        <div class="d-flex align-center justify-center ma-1 playerGamePanel" :class="{
+          playerGameSelected: selectGame && game.id == selectGame.id,
+        }" v-else-if="mode == 2">
           <div class="ma-1">
-            <v-avatar
-              transition="scale-transition"
-              size="60"
-              style="border-style: solid; border-width: 2px"
-              :style="{ borderColor: getBorderColor(game) }"
-            >
+            <v-avatar transition="scale-transition" size="60" style="border-style: solid; border-width: 2px"
+              :style="{ borderColor: getBorderColor(game) }">
               <v-img cover :src="game.imageSource" />
             </v-avatar>
           </div>
@@ -44,17 +29,10 @@
             {{ game.totalPlays }}
           </div>
         </div>
-        <div
-          class="d-flex align-center justify-center ma-1 playerGamePanel"
-          v-else-if="mode == 3"
-        >
+        <div class="d-flex align-center justify-center ma-1 playerGamePanel" v-else-if="mode == 3">
           <div class="ma-1">
-            <v-avatar
-              transition="scale-transition"
-              size="60"
-              style="border-style: solid; border-width: 2px"
-              :style="{ borderColor: getBorderColor(game) }"
-            >
+            <v-avatar transition="scale-transition" size="60" style="border-style: solid; border-width: 2px"
+              :style="{ borderColor: getBorderColor(game) }">
               <v-img cover :src="game.imageSource" />
             </v-avatar>
           </div>
@@ -65,26 +43,24 @@
             {{ game.totalWins }}
           </div>
         </div>
-        <div
-          class="d-flex align-center justify-center ma-1 playerGamePanel"
-          v-else-if="mode == 4"
-        >
+        <div class="d-flex align-center justify-center ma-1 playerGamePanel" v-else-if="mode == 4">
           <div class="ma-1">
-            <v-avatar
-              transition="scale-transition"
-              size="60"
-              style="border-style: solid; border-width: 2px"
-              :style="{ borderColor: getBorderColor(game) }"
-            >
+            <v-avatar transition="scale-transition" size="60" style="border-style: solid; border-width: 2px"
+              :style="{ borderColor: getBorderColor(game) }">
               <v-img cover :src="game.imageSource" />
             </v-avatar>
           </div>
-          <div style="width: 90%" class="text-h6">
+          <div style="width: 72%" class="text-h6">
             {{ game.name }}
           </div>
           <div style="width: 10%" class="text-h5 font-weight-bold">
             {{ game.points.toFixed(2) }}
           </div>
+          <div style="width: 18%" class="text-h5 font-weight-bold"
+            :class="{ 'text-success': game.eloChange > 0, 'text-error': game.eloChange < 0 }">
+            {{ formatEloGain(game.eloChange) }}
+          </div>
+
           <!-- <div style="width: 10%" class="text-h5 font-weight-bold">
             {{ game.pointsV2.toFixed(2) }}
           </div> -->
@@ -102,7 +78,7 @@
 //1 = Home page (just game name)
 //2 = Most Played Games (game name + total plays)
 //3 = Most Won Games (game name + total wins)
-//4 = Best Scoring Games (game name + avg score + points)
+//4 = Best Scoring Games (game name + avg score + elo change + points)
 export default {
   name: "PlayerGamesTable",
   props: {
@@ -117,6 +93,11 @@ export default {
     getBorderColor(game) {
       return `#${game.mutedColor ? game.mutedColor.slice(2, game.mutedColor.length) : game.dominantColor ? game.dominantColor.slice(2, game.dominantColor.length) : "ffffff"}`;
     },
+    formatEloGain(value) {
+        const numericValue = Number(value ?? 0);
+        const prefix = numericValue > 0 ? "+" : "";
+        return `${prefix}${Math.round(numericValue)}`;
+    }
   },
 };
 </script>
@@ -126,14 +107,17 @@ export default {
   border-radius: 50px 20px 20px 50px;
   color: rgb(var(--v-theme-surface-darker-text));
 }
+
 .playerGamePanel:hover {
   background: rgb(var(--v-theme-accent-lighter));
   cursor: pointer;
   color: rgb(var(--v-theme-accent-lighter-text)) !important;
 }
-.playerGamePanel:hover > .text-h6 {
+
+.playerGamePanel:hover>.text-h6 {
   font-weight: bold !important;
 }
+
 .playerGameSelected {
   background: rgb(var(--v-theme-accent-darker));
   color: rgb(var(--v-theme-accent-lighter-text)) !important;

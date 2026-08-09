@@ -22,6 +22,7 @@ export function createGameDataObjectFromPlayerPerspective(
       x.playerId == player.id &&
       filteredGamePlays.map((y) => y.id).includes(x.playId)
   );
+
   const totalWins = playerPlayerPlays.filter((x) => x.winner === 1);
   return {
     game: game,
@@ -29,8 +30,9 @@ export function createGameDataObjectFromPlayerPerspective(
     player: player,
     playerTotalPlays: playerPlayerPlays.length,
     playerTotalWins: totalWins.length,
+    playerTotalEloChange: _.sumBy(playerPlayerPlays, "eloChange"),
     playerPoints: _.meanBy(points, "playerScore"),
-    playerPointsV2: _.meanBy(points, "playerScoreV2"),
+    playerPointsV2: _.meanBy(points, "playerScoreV2")
   };
 }
 
@@ -70,6 +72,7 @@ export function createPlayerDataObjectFromGamePerspective(
     player: player,
     playerTotalPlays: playerPlayerPlays.length,
     playerTotalWins: totalWins.length,
+    playerTotalEloChange: _.sumBy(playerPlayerPlays, "eloChange"),
     playerPoints: _.meanBy(points, "playerScore"),
     playerPointsV2: _.meanBy(points, "playerScoreV2"),
   };

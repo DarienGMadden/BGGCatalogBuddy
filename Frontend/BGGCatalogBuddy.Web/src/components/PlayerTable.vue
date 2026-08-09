@@ -12,9 +12,12 @@
         <div style="width: 15%" class="text-h6 text-accent font-weight-bold">
           Score
         </div>
+        <div style="width: 18%" class="text-h6 text-accent font-weight-bold">
+          Elo Gain
+        </div>
       </div>
     </div>
-    <div v-for="player in players" v-bind:key="player.id">
+    <div v-for="(player, index) in players" v-bind:key="player.id">
       <div class="d-flex align-center justify-center ma-1 playerPanel" v-on:click.stop="viewPlayer(player.id)"
         v-if="mode == 1">
         <div class="ma-1">
@@ -36,7 +39,7 @@
         </div>
         <div style="width: 80%" class="text-h5">{{ player.name }}</div>
         <div style="width: 20%" class="text-h5 font-weight-bold">
-          {{ player.score.toFixed(2) }}
+          {{ player.playerTotalElo }}
         </div>
       </div>
       <div class="d-flex align-center justify-center ma-1 playerPanel" v-on:click.stop="viewPlayer(player.id)"
@@ -47,7 +50,16 @@
             <v-img cover :src="player.imageSource" />
           </v-avatar>
         </div>
-        <div class="w-100 text-h5">{{ player.name }}</div>
+        <div class="w-100 text-h5" style="min-width: 220px;">
+          <div v-if="index == 0" class="d-flex align-center justify-center">
+            <div><v-icon color="orange"> mdi-crown </v-icon></div>
+            <div style="padding-top:3px; padding-left: 5px">{{ player.name }}</div>
+          </div>
+          <div v-else class="d-flex align-center justify-center">
+            <div></div>
+            <div>{{ player.name }}</div>
+          </div>
+        </div>
         <div style="width: 15%" class="text-h5 font-weight-bold">
           {{ player.totalPlays }}
         </div>
@@ -56,6 +68,10 @@
         </div>
         <div style="width: 15%" class="text-h5 font-weight-bold">
           {{ player.score.toFixed(2) }}
+        </div>
+        <div style="width: 18%" class="text-h5 font-weight-bold"
+          :class="{ 'text-success': player.eloChange > 0, 'text-error': player.eloChange < 0 }">
+          {{ formatEloGain(player.eloChange) }}
         </div>
       </div>
     </div>
@@ -85,6 +101,11 @@ export default {
     getBorderColor(player) {
       return `#${player.color.slice(2, player.color.length)}`;
     },
+    formatEloGain(value) {
+      const numericValue = Number(value ?? 0);
+      const prefix = numericValue > 0 ? "+" : "";
+      return `${prefix}${Math.round(numericValue)}`;
+    }
   },
 };
 </script>

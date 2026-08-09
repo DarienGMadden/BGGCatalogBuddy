@@ -2,13 +2,20 @@
     <div v-if="playerPlays && playerPlays.length > 0">
         <div>
             <div class="d-flex align-center justify-center ma-1" v-if="mode == 1">
-                <div class="w-100"></div>
+                <div class="w-100" style="min-width: 220px;"></div>
                 <div style="width: 15%" class="text-h6 text-accent font-weight-bold">
                     Score
                 </div>
                 <div style="width: 15%" class="text-h6 text-accent font-weight-bold">
                     Position
                 </div>
+                <div style="width: 18%" class="text-h6 text-accent font-weight-bold">
+                    Start Elo
+                </div>
+                <div style="width: 18%" class="text-h6 text-accent font-weight-bold">
+                    Elo Gain
+                </div>
+
             </div>
         </div>
         <div v-for="playerPlay in orderedPlays" v-bind:key="playerPlay.id">
@@ -20,7 +27,7 @@
                         <v-img cover :src="playerPlay.player.imageSource" />
                     </v-avatar>
                 </div>
-                <div class="w-100 text-h5">
+                <div class="w-100 text-h5" style="min-width: 220px;">
                     <div v-if="playerPlay.winner" class="d-flex align-center justify-center">
                         <div><v-icon color="orange"> mdi-crown </v-icon></div>
                         <div style="padding-top:3px; padding-left: 5px">{{ playerPlay.player.name }}</div>
@@ -35,6 +42,13 @@
                 </div>
                 <div style="width: 15%" class="text-h5 font-weight-bold">
                     {{ calculatePosition(playerPlay) }}
+                </div>
+                <div style="width: 18%" class="text-h5 font-weight-bold">
+                    {{ formatElo(playerPlay.startingElo) }}
+                </div>
+                <div style="width: 18%" class="text-h5 font-weight-bold"
+                    :class="{ 'text-success': getEloGain(playerPlay) > 0, 'text-error': getEloGain(playerPlay) < 0 }">
+                    {{ formatEloGain(playerPlay.eloChange) }}
                 </div>
             </div>
         </div>
@@ -78,6 +92,18 @@ export default {
                     return position;
                 }
             }
+        },
+        formatElo(value) {
+            const numericValue = Number(value ?? 1500);
+            return Number.isFinite(numericValue) ? Math.round(numericValue).toString() : "1500";
+        },
+        getEloGain(playerPlay) {
+            return Number(playerPlay?.eloChange ?? 0);
+        },
+        formatEloGain(value) {
+            const numericValue = Number(value ?? 0);
+            const prefix = numericValue > 0 ? "+" : "";
+            return `${prefix}${Math.round(numericValue)}`;
         }
     },
     computed: {

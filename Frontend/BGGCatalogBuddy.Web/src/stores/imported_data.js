@@ -1,5 +1,6 @@
 import { defineStore, getActivePinia } from "pinia";
 import moment from "moment";
+import { enrichPlayersPlaysWithElo } from "@/utils/importUtils";
 
 export default defineStore("imported_data", {
   state: () => ({
@@ -9,9 +10,11 @@ export default defineStore("imported_data", {
   }),
   persist: true,
   actions: {
-    data_storeData(jsonFile, playerImages, replaceImages) {
+    data_storeData(jsonFile, playerImages, replaceImages = true) {
+      const enrichedJsonFile = enrichPlayersPlaysWithElo(jsonFile);
+
       this.data_lastImportDate = moment().format("DD/MM/YYYY HH:mm");
-      this.data_jsonFile = jsonFile;
+      this.data_jsonFile = enrichedJsonFile;
       if (replaceImages) {
         this.data_playerImages = [];
         playerImages.map((x) => {

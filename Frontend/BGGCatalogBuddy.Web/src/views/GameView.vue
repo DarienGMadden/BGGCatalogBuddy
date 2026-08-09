@@ -153,9 +153,10 @@ export default {
           totalPlays: x.playerTotalPlays,
           totalWins: x.playerTotalWins,
           score: x.playerPoints,
+          eloChange: x.playerTotalEloChange
         })),
-        ["score"],
-        ["desc"]
+        ["score", "eloChange"],
+        ["desc", "desc"]
       );
     },
     generateRecentPlaysData() {
