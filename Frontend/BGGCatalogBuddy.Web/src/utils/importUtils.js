@@ -2,6 +2,21 @@ import JSZip from "jszip";
 import imageCompression from "browser-image-compression";
 
 const DEFAULT_ELO = 1500;
+const PROVISIONAL_GAMES = 10;
+const PROVISIONAL_K_MULTIPLIER = 1.5;
+// Lower-rated players earn and lose more; capped to avoid extreme swings.
+const ELO_MODIFIER_MIN = 0.8;
+const ELO_MODIFIER_MAX = 1.3;
+const ELO_MODIFIER_LOW = 1400;  // ELO at which MAX modifier is reached
+const ELO_MODIFIER_HIGH = 1650; // ELO at which MIN modifier is reached
+// Higher value makes all matchups look closer to 50/50, compressing future spread.
+const ELO_CURVE_DIVISOR = 600;
+// 3-player games are the baseline; fewer players = less ELO, more players = more ELO.
+const PLAYER_COUNT_BASELINE = 3;
+// These players gain less when winning and lose more when losing, regardless of game.
+const RESTRICTED_PLAYER_IDS = new Set([3, 4]); // Darien, Steven
+const RESTRICTED_GAIN_MULTIPLIER = 0.75;
+const RESTRICTED_LOSS_MULTIPLIER = 1.25;
 
 export function enrichPlayersPlaysWithElo(jsonFile) {
   if (!jsonFile || !Array.isArray(jsonFile.playersPlays)) {
@@ -14,6 +29,7 @@ export function enrichPlayersPlaysWithElo(jsonFile) {
 
   // Elo is tracked separately for each player at each location.
   const playerLatestElo = new Map();
+  const playerGamesPlayed = new Map();
 
   const eloKey = (locationId, playerId) => `${locationId}:${playerId}`;
 
@@ -49,6 +65,11 @@ export function enrichPlayersPlaysWithElo(jsonFile) {
     const playEntries = jsonFile.playersPlays.filter(
       (entry) => entry.playId === playId,
     );
+
+    // Solo plays don't affect Elo.
+    if (playEntries.length < 2) {
+      continue;
+    }
 
     /*
      * calculateWinner determines which direction the score goes.
@@ -121,6 +142,7 @@ export function enrichPlayersPlaysWithElo(jsonFile) {
      * from affecting another player's calculation.
      */
     const gameStartingElo = new Map();
+    const gameGamesPlayed = new Map();
 
     for (const playerPlay of playEntries) {
       const key = eloKey(locationId, playerPlay.playerId);
@@ -129,46 +151,105 @@ export function enrichPlayersPlaysWithElo(jsonFile) {
         playerPlay.playerId,
         playerLatestElo.get(key) ?? DEFAULT_ELO,
       );
+      gameGamesPlayed.set(
+        playerPlay.playerId,
+        playerGamesPlayed.get(key) ?? 0,
+      );
     }
 
     /*
      * Calculate all players' results using the same
      * pre-game Elo ratings.
      */
+    const placements = new Map(
+      playEntries.map((entry) => [entry.playerId, getSharedPlacement(entry.playerId)]),
+    );
+
+    // Precompute K-factors so paired K can be used for zero-sum transfers.
+    const playerKFactors = new Map();
+    for (const playerPlay of playEntries) {
+      const startingElo = gameStartingElo.get(playerPlay.playerId) ?? DEFAULT_ELO;
+      const gamesPlayed = gameGamesPlayed.get(playerPlay.playerId) ?? 0;
+      const baseK = 24 + gameWeight * 6;
+      const eloModifier = Math.max(
+        ELO_MODIFIER_MIN,
+        Math.min(
+          ELO_MODIFIER_MAX,
+          ELO_MODIFIER_MAX +
+            ((ELO_MODIFIER_MIN - ELO_MODIFIER_MAX) * (startingElo - ELO_MODIFIER_LOW)) /
+            (ELO_MODIFIER_HIGH - ELO_MODIFIER_LOW),
+        ),
+      );
+      playerKFactors.set(
+        playerPlay.playerId,
+        baseK * eloModifier * (gamesPlayed < PROVISIONAL_GAMES ? PROVISIONAL_K_MULTIPLIER : 1),
+      );
+    }
+
     const gameResults = [];
 
     for (const playerPlay of playEntries) {
       const startingElo =
         gameStartingElo.get(playerPlay.playerId) ?? DEFAULT_ELO;
 
+      const kFactor = playerKFactors.get(playerPlay.playerId);
+
       const opponents = playEntries.filter(
         (entry) => entry.playerId !== playerPlay.playerId,
       );
 
-      const avgOpponentElo = opponents.length
-        ? opponents.reduce(
-            (sum, opponent) =>
-              sum + (gameStartingElo.get(opponent.playerId) ?? DEFAULT_ELO),
-            0,
-          ) / opponents.length
-        : startingElo;
+      const playerPosition = placements.get(playerPlay.playerId);
 
-      const position = getSharedPlacement(playerPlay.playerId);
-      const maxPlayers = Math.max(playEntries.length, 1);
-      const placementScore = 1 - (position - 1) / Math.max(maxPlayers - 1, 1);
-      const winBonus = Number(playerPlay.winner ?? 0) === 1 ? 0.4 : 0;
-      const actualResult = Math.max(0, Math.min(1, placementScore + winBonus));
-      const expectedResult = 1 / (1 + 10 ** ((avgOpponentElo - startingElo) / 400));
-      const kFactor = 24 + 1.25 * gameWeight * 16;
-      const eloChange = Math.round((actualResult - expectedResult) * kFactor);
-      const endingElo = startingElo + eloChange;
+      // Average K per pair ensures each pairwise transfer is zero-sum.
+      const pairwiseDelta = opponents.reduce((sum, opponent) => {
+        const opponentElo = gameStartingElo.get(opponent.playerId) ?? DEFAULT_ELO;
+        const opponentPosition = placements.get(opponent.playerId);
+        const pairK = (kFactor + playerKFactors.get(opponent.playerId)) / 2;
+
+        const actual = playerPosition < opponentPosition ? 1.0
+                     : playerPosition === opponentPosition ? 0.5
+                     : 0.0;
+        const expected = 1 / (1 + 10 ** ((opponentElo - startingElo) / ELO_CURVE_DIVISOR));
+
+        return sum + (actual - expected) * pairK;
+      }, 0);
+
+      const rawChange = (pairwiseDelta / opponents.length) * (playEntries.length / PLAYER_COUNT_BASELINE);
+      const isOwner = RESTRICTED_PLAYER_IDS.has(playerPlay.playerId);
+      const adjustedChange = isOwner
+        ? rawChange >= 0 ? rawChange * RESTRICTED_GAIN_MULTIPLIER : rawChange * RESTRICTED_LOSS_MULTIPLIER
+        : rawChange;
 
       gameResults.push({
         playerPlay,
         startingElo,
-        eloChange,
-        endingElo,
+        isOwner,
+        rawChange,
+        adjustedChange,
       });
+    }
+
+    // Redistribute surrendered ELO from owners equally among their opponents.
+    for (const result of gameResults) {
+      if (!result.isOwner) continue;
+
+      const surrendered = result.rawChange - result.adjustedChange;
+      if (surrendered === 0) continue;
+
+      const opponentResults = gameResults.filter(
+        (r) => r.playerPlay.playerId !== result.playerPlay.playerId,
+      );
+
+      const sharePerOpponent = surrendered / opponentResults.length;
+      for (const oppResult of opponentResults) {
+        oppResult.adjustedChange += sharePerOpponent;
+      }
+    }
+
+    // Round and commit final ELO values after redistribution.
+    for (const result of gameResults) {
+      result.eloChange = Math.round(result.adjustedChange);
+      result.endingElo = result.startingElo + result.eloChange;
     }
 
     /*
@@ -178,42 +259,35 @@ export function enrichPlayersPlaysWithElo(jsonFile) {
     for (const result of gameResults) {
       const { playerPlay, startingElo, eloChange, endingElo } = result;
 
-      playerPlay.startingElo = Number(startingElo.toFixed(2));
-      playerPlay.eloChange = Number(eloChange);
-      playerPlay.endingElo = Number(endingElo.toFixed(2));
+      playerPlay.startingElo = startingElo;
+      playerPlay.eloChange = eloChange;
+      playerPlay.endingElo = endingElo;
 
       const key = eloKey(locationId, playerPlay.playerId);
       playerLatestElo.set(key, endingElo);
+      playerGamesPlayed.set(key, (playerGamesPlayed.get(key) ?? 0) + 1);
     }
   }
 
   return jsonFile;
 }
 
-export async function processJsonFile(file) {
-  // Wrap the FileReader in a promise
-  const jsonData = await new Promise((resolve, reject) => {
+export function processJsonFile(file) {
+  return new Promise((resolve, reject) => {
     const reader = new FileReader();
 
     reader.onload = (e) => {
       try {
-        const data = JSON.parse(e.target.result);
-        console.log("JSON Data:", data);
-        resolve(data); // Resolve the promise with the parsed data
+        resolve(JSON.parse(e.target.result));
       } catch (error) {
         console.error("Invalid JSON file", error);
-        reject(error); // Reject the promise if there's an error
+        reject(error);
       }
     };
 
-    reader.onerror = (error) => {
-      reject(error); // Reject the promise on file read error
-    };
-
-    reader.readAsText(file); // Start reading the file
+    reader.onerror = reject;
+    reader.readAsText(file);
   });
-
-  return jsonData;
 }
 export async function processZipFile(file) {
   let jsonData = null;
@@ -228,7 +302,6 @@ export async function processZipFile(file) {
       if (ext === "json") {
         const fileData = await zipContents.files[filename].async("text");
         jsonData = JSON.parse(fileData);
-        console.log("Extracted JSON Data:", jsonData);
       } else if (["jpg", "jpeg", "png"].includes(ext)) {
         const blob = await zipContents.files[filename].async("blob");
         try {
@@ -249,7 +322,6 @@ export async function processZipFile(file) {
       }
     }
 
-    console.log("Extracted Images:", this.imagesBase64);
   } catch (error) {
     console.error("Error processing ZIP file", error);
   }
